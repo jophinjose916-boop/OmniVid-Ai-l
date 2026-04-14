@@ -16,8 +16,9 @@ export interface VoiceOption {
 }
 
 export const VOICES: VoiceOption[] = [
-  { id: 'Algenib', name: 'Algenib', description: 'Deep & Professional (Multi-lingual)' },
-  { id: 'Achernar', name: 'Achernar', description: 'Soft & Narrative (Multi-lingual)' },
-  { id: 'Castor', name: 'Castor', description: 'Energetic & Bright (Multi-lingual)' },
-  { id: 'Deneb', name: 'Deneb', description: 'Calm & Friendly (Multi-lingual)' },
+  { id: 'Algenib', name: 'Wise Old Man', description: 'Deep, resonant, and professional tone' },
+  { id: 'Hadrit', name: 'Mature Old Woman', description: 'Sophisticated, authoritative, and warm' },
+  { id: 'Achernar', name: 'Soft Narrative Female', description: 'Graceful, calm, and evocative' },
+  { id: 'Castor', name: 'Professional Male', description: 'Clear, modern, and energetic' },
+  { id: 'Deneb', name: 'Innocent Child', description: 'Light, bright, and playful' },
 ];

@@ -28,10 +28,10 @@ const optimizePromptForVideo = ai.definePrompt({
   input: { schema: PromptOptimizationInputSchema },
   output: { schema: PromptOptimizationOutputSchema },
   prompt: `You are a world-class AI Cinematographer.
-Your task is to take a user's prompt (provided in any language) and expand it into a detailed, cinematic English visual masterplan for an AI video generator.
+Your task is to take a user's prompt (provided in any language—Malayalam, German, English, Hindi, etc.) and expand it into a detailed, cinematic English visual masterplan for an AI video generator.
 
 Expansion Guidelines:
-1. Universal Translation: If the input is not in English (e.g., Malayalam, German, Hindi, Spanish, etc.), accurately translate the core poetic intent to English first.
+1. Universal Translation: If the input is not in English, accurately translate the core poetic intent to English first.
 2. Cinematic Detail: Add specific visual instructions for textures, volumetric lighting, atmospheric conditions, and camera techniques (e.g., anamorphic flares, 65mm drone sweep).
 3. 30-Minute Context: Describe the scene in a way that supports an extended, immersive cinematic sequence.
 4. Output: Always provide the final optimized prompt in English.

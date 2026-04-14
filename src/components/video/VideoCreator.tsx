@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock, Fingerprint, Mail } from 'lucide-react';
+import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock, Fingerprint, Mail, UserCircle } from 'lucide-react';
 import { optimizePrompt } from '@/ai/flows/prompt-optimization';
 import { multilingualVideoGeneration } from '@/ai/flows/multilingual-video-generation';
 import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
@@ -305,16 +305,19 @@ export function VideoCreator() {
                 </div>
                 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">AI Narrator</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Select AI Persona</label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                     <SelectTrigger className="w-full bg-background/50 border-white/5 h-14 rounded-xl">
-                      <SelectValue placeholder="Select voice" />
+                      <SelectValue placeholder="Select voice persona" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-white/10">
                       {VOICES.map(voice => (
                         <SelectItem key={voice.id} value={voice.id}>
                           <div className="flex flex-col text-left py-1">
-                            <span className="font-bold text-sm">{voice.name}</span>
+                            <span className="font-bold text-sm flex items-center gap-2">
+                              <UserCircle className="w-3.5 h-3.5 opacity-50" />
+                              {voice.name}
+                            </span>
                             <span className="text-[10px] opacity-60 uppercase tracking-tighter">{voice.description}</span>
                           </div>
                         </SelectItem>
@@ -343,7 +346,7 @@ export function VideoCreator() {
                   disabled={isGeneratingVoice || !voiceScript}
                 >
                   {isGeneratingVoice ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic2 className="w-5 h-5" />}
-                  {isGeneratingVoice ? "Synthesizing..." : "Synthesize AI Voice"}
+                  {isGeneratingVoice ? "Synthesizing Persona..." : "Generate AI Voiceover"}
                 </Button>
 
                 {audioUrl && (
