@@ -1,0 +1,29 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract purple and blue digital background",
+      "imageUrl": "https://picsum.photos/seed/omni-hero/1200/800",
+      "imageHint": "abstract digital"
+    },
+    {
+      "id": "sample-video-1",
+      "description": "Flying tiger over a futuristic city",
+      "imageUrl": "https://picsum.photos/seed/tiger/600/400",
+      "imageHint": "fantasy city"
+    },
+    {
+      "id": "sample-video-2",
+      "description": "Cyberpunk forest with glowing plants",
+      "imageUrl": "https://picsum.photos/seed/forest/600/400",
+      "imageHint": "cyberpunk forest"
+    },
+    {
+      "id": "user-avatar",
+      "description": "Default user avatar",
+      "imageUrl": "https://picsum.photos/seed/user/100/100",
+      "imageHint": "portrait"
+    }
+  ]
+}
