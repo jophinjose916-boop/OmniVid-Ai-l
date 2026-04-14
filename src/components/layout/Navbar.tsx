@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Video, Library, Sparkles, User, Zap, LogIn } from 'lucide-react';
+import { Video, Library, Sparkles, User, Zap, LogIn, Fingerprint, Mail } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser, useAuth, useFirestore, initiateGoogleSignIn, setDocumentNonBlocking } from '@/firebase';
@@ -16,11 +16,6 @@ export function Navbar() {
   const auth = useAuth();
   const db = useFirestore();
 
-  const navItems = [
-    { label: 'Create', icon: Video, href: '/dashboard' },
-    { label: 'Library', icon: Library, href: '/dashboard/library' },
-  ];
-
   // Sync user profile to Firestore if signed in via Google
   useEffect(() => {
     if (user && !user.isAnonymous && db) {
@@ -30,12 +25,15 @@ export function Navbar() {
         googleId: user.providerData[0]?.uid || user.uid,
         email: user.email,
         lastLoginAt: new Date().toISOString(),
-        // Only set createdAt if it doesn't exist (handled by merge strategy if we add logic, 
-        // but for now simple merge is fine for MVP)
         createdAt: new Date().toISOString(), 
       }, { merge: true });
     }
   }, [user, db]);
+
+  const navItems = [
+    { label: 'Create', icon: Video, href: '/dashboard' },
+    { label: 'Library', icon: Library, href: '/dashboard/library' },
+  ];
 
   return (
     <nav className="sticky top-0 z-50 w-full glass-morphism border-b">
@@ -70,27 +68,30 @@ export function Navbar() {
 
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" className="hidden sm:flex gap-2 border-primary/30 text-primary hover:bg-primary/5">
-            <Zap className="w-4 h-4 fill-primary" />
-            Standard Mode
+            <Fingerprint className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-bold uppercase tracking-tighter">Biometric Secure</span>
           </Button>
 
           {user && !user.isAnonymous ? (
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 ring-2 ring-primary/20">
-              <img 
-                src={user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} 
-                alt={user.displayName || "User"} 
-                className="w-full h-full object-cover"
-              />
+            <div className="flex items-center gap-3">
+              <span className="hidden lg:inline text-xs font-medium text-muted-foreground">{user.email}</span>
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 ring-2 ring-primary/20">
+                <img 
+                  src={user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} 
+                  alt={user.displayName || "User"} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           ) : (
             <Button 
               variant="secondary" 
               size="sm" 
-              className="gap-2 font-bold"
+              className="gap-2 font-bold gradient-bg text-white border-none"
               onClick={() => auth && initiateGoogleSignIn(auth)}
             >
-              <LogIn className="w-4 h-4" />
-              Sign In
+              <Mail className="w-4 h-4" />
+              Log Gmail
             </Button>
           )}
         </div>

@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock } from 'lucide-react';
+import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock, Fingerprint } from 'lucide-react';
 import { optimizePrompt } from '@/ai/flows/prompt-optimization';
 import { multilingualVideoGeneration } from '@/ai/flows/multilingual-video-generation';
 import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
@@ -218,8 +219,8 @@ export function VideoCreator() {
                     AI Vision Masterplan (30-Min Session)
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-3 h-3 text-secondary" />
-                    <span className="text-[10px] text-secondary">Extended Render Enabled</span>
+                    <Fingerprint className="w-3 h-3 text-secondary animate-pulse" />
+                    <span className="text-[10px] text-secondary">Secure Extended Render</span>
                   </div>
                 </div>
                 <Textarea 
@@ -241,7 +242,7 @@ export function VideoCreator() {
                   <div className="absolute inset-0 blur-xl gradient-bg opacity-30 animate-pulse"></div>
                 </div>
                 <p className="text-muted-foreground animate-pulse font-headline font-bold">Rendering Extended 30-Min 4K Video...</p>
-                <p className="text-[10px] text-muted-foreground opacity-60">High-bitrate cinematic processing</p>
+                <p className="text-[10px] text-muted-foreground opacity-60">High-bitrate biometric-secure processing</p>
               </div>
             ) : (
               <div className="text-center text-muted-foreground space-y-2 px-8">
@@ -361,11 +362,11 @@ export function VideoCreator() {
           <Card className="bg-primary/5 border-primary/20 rounded-2xl shadow-inner">
             <CardContent className="p-4 space-y-3">
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                <Globe className="w-3 h-3" />
-                Language Policy
+                <Fingerprint className="w-3 h-3" />
+                Security Policy
               </h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Enjoy **unlimited 30-minute generations** with no time caps. Support for Malayalam, English, and German cinematic storytelling.
+                Log with **Gmail** for persistent storage. Our platform uses Google technology for biometric-ready secure session management.
               </p>
             </CardContent>
           </Card>
