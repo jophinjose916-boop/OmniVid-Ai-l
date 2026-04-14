@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VOICES } from '@/lib/types';
 import { useUser, useFirestore, useAuth, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
-import { doc, serverTimestamp } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 
 export function VideoCreator() {
   const [userPrompt, setUserPrompt] = useState('');
@@ -29,7 +29,6 @@ export function VideoCreator() {
   const auth = useAuth();
   const { toast } = useToast();
 
-  // Ensure user is signed in anonymously at minimum
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
@@ -42,9 +41,9 @@ export function VideoCreator() {
     try {
       const result = await optimizePrompt({ userPrompt });
       setOptimizedPrompt(result.optimizedPrompt);
-      toast({ title: "Prompt Optimized", description: "Your prompt is now ready for high-quality video generation." });
+      toast({ title: "Prompt Optimized", description: "Your prompt has been enhanced with cinematic details." });
     } catch (error) {
-      toast({ variant: "destructive", title: "Optimization Failed", description: "Please try again later." });
+      toast({ variant: "destructive", title: "Optimization Failed", description: "Please try again." });
     } finally {
       setIsOptimizing(false);
     }
@@ -59,24 +58,21 @@ export function VideoCreator() {
     setAudioUrl('');
 
     try {
-      // Step 1: Video Generation
       const videoResult = await multilingualVideoGeneration({ prompt: promptToUse });
       const finalVideoUrl = videoResult.videoDataUri;
       setVideoUrl(finalVideoUrl);
       
-      // Step 2: Voiceover
       let finalAudioUrl = '';
-      if (userPrompt.length > 10) {
+      if (userPrompt.length > 5) {
         try {
           const audioResult = await multilingualVoiceover({ text: userPrompt, voiceName: selectedVoice });
           finalAudioUrl = audioResult.audioDataUri;
           setAudioUrl(finalAudioUrl);
         } catch (e) {
-          console.warn("Voiceover generation failed, continuing with video only.");
+          console.warn("Voiceover failed", e);
         }
       }
 
-      // Step 3: Save to Firestore
       const videoId = crypto.randomUUID();
       const videoRef = doc(db, 'users', user.uid, 'videos', videoId);
       
@@ -85,23 +81,23 @@ export function VideoCreator() {
         userId: user.uid,
         originalPrompt: userPrompt,
         optimizedPrompt: optimizedPrompt || userPrompt,
-        inputLanguage: 'auto', // Detected by flow
-        outputLanguage: 'en', // Default for now
+        inputLanguage: 'auto',
+        outputLanguage: 'en',
         visualStyle: 'Cinematic',
         status: 'completed',
         generationMode: 'Standard',
         resolution: '720p',
-        storageUrl: finalVideoUrl, // In a real app this would be a GCS URL
+        storageUrl: finalVideoUrl,
         thumbnailUrl: `https://picsum.photos/seed/${videoId}/600/400`,
-        durationSeconds: 5,
-        createdAt: new Date().toISOString(), // Simplified for now
+        durationSeconds: 8,
+        createdAt: new Date().toISOString(),
         isWatermarked: true,
       }, { merge: true });
       
-      toast({ title: "Generation Complete!", description: "Your AI video is ready and saved to your library." });
+      toast({ title: "Magic Complete!", description: "Your video is ready and saved to your library." });
     } catch (error) {
       console.error(error);
-      toast({ variant: "destructive", title: "Generation Failed", description: "High traffic detected or safety violation." });
+      toast({ variant: "destructive", title: "Generation Failed", description: "High load detected. Please try again shortly." });
     } finally {
       setIsGenerating(false);
     }
@@ -113,22 +109,22 @@ export function VideoCreator() {
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Languages className="w-4 h-4" />
-            Describe your video in any language
+            Describe your vision in any language
           </label>
           <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center gap-1">
             <Zap className="w-3 h-3 fill-primary" />
-            Unlimited Standard Mode Active
+            Unlimited Mode Active
           </div>
         </div>
         
         <div className="relative">
           <Textarea
-            placeholder="e.g., A flying tiger over the neon streets of Mumbai at sunset, cinematic lighting, 8k..."
+            placeholder="e.g., A majestic dragon soaring over a mystical forest at dawn..."
             className="min-h-[120px] bg-card/50 border-white/10 focus:ring-primary text-lg resize-none pr-32"
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
           />
-          <div className="absolute right-3 bottom-3 flex gap-2">
+          <div className="absolute right-3 bottom-3">
              <Button 
               size="sm" 
               variant="secondary" 
@@ -137,7 +133,7 @@ export function VideoCreator() {
               className="gap-2"
             >
               {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-              Optimize
+              AI Enhance
             </Button>
           </div>
         </div>
@@ -146,22 +142,20 @@ export function VideoCreator() {
           <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2 animate-in zoom-in-95 duration-300">
             <div className="text-xs font-bold text-primary flex items-center gap-2">
               <Sparkles className="w-3 h-3" />
-              AI-OPTIMIZED PROMPT (ENGLISH)
+              ENHANCED VISION (EDITABLE)
             </div>
-            <div className="flex gap-2 items-start">
-              <Textarea 
-                value={optimizedPrompt}
-                onChange={(e) => setOptimizedPrompt(e.target.value)}
-                className="text-sm bg-transparent border-none p-0 focus-visible:ring-0 min-h-[40px] resize-none text-foreground/80 italic leading-relaxed"
-              />
-            </div>
+            <Textarea 
+              value={optimizedPrompt}
+              onChange={(e) => setOptimizedPrompt(e.target.value)}
+              className="text-sm bg-transparent border-none p-0 focus-visible:ring-0 min-h-[60px] resize-none text-foreground/80 italic leading-relaxed"
+            />
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-4">
-          <Card className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center group">
+          <Card className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center group border-white/5 shadow-2xl">
             {videoUrl ? (
               <>
                 <video src={videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
@@ -173,12 +167,12 @@ export function VideoCreator() {
                   <Loader2 className="w-12 h-12 text-primary animate-spin" />
                   <div className="absolute inset-0 blur-xl gradient-bg opacity-30 animate-pulse-subtle"></div>
                 </div>
-                <p className="text-muted-foreground animate-pulse">Generating your masterpiece...</p>
+                <p className="text-muted-foreground animate-pulse">Rendering your imagination...</p>
               </div>
             ) : (
               <div className="text-center text-muted-foreground space-y-2 px-8">
                 <Play className="w-12 h-12 mx-auto opacity-20" />
-                <p>Your generated video will appear here</p>
+                <p>Preview your masterpiece here</p>
               </div>
             )}
           </Card>
@@ -189,13 +183,10 @@ export function VideoCreator() {
               onClick={handleGenerate}
               disabled={isGenerating || !userPrompt || isUserLoading}
             >
-              {isGenerating ? "GENERATING..." : "GENERATE VIDEO"}
+              {isGenerating ? "CREATING..." : "GENERATE VIDEO"}
             </Button>
             <Button variant="outline" size="icon" className="h-12 w-12" disabled={!videoUrl}>
               <Download className="w-5 h-5" />
-            </Button>
-            <Button variant="outline" size="icon" className="h-12 w-12" disabled={!videoUrl}>
-              <Share2 className="w-5 h-5" />
             </Button>
           </div>
         </div>
@@ -204,7 +195,7 @@ export function VideoCreator() {
           <div className="space-y-4">
             <h3 className="text-sm font-medium flex items-center gap-2">
               <Volume2 className="w-4 h-4" />
-              Voiceover Settings
+              Narration Voice
             </h3>
             <Select value={selectedVoice} onValueChange={setSelectedVoice}>
               <SelectTrigger className="w-full bg-card/50 border-white/10">
@@ -225,17 +216,17 @@ export function VideoCreator() {
 
           <Card className="bg-card/30 border-white/5">
             <CardContent className="p-4 space-y-3">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Queue Status</h4>
+              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cloud Processing</h4>
               <div className="flex items-center justify-between text-sm">
-                <span>Standard Queue</span>
-                <span className="text-primary font-medium">~5 mins</span>
+                <span>Free Tier</span>
+                <span className="text-primary font-medium">Active</span>
               </div>
               <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                <div className="bg-primary w-2/3 h-full animate-pulse-subtle"></div>
+                <div className="bg-primary w-full h-full"></div>
               </div>
-              <Button variant="link" className="text-xs p-0 h-auto text-secondary hover:text-secondary/80">
-                Watch an ad for Instant Pass →
-              </Button>
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                Standard generations are free. Use the ad-supported fast pass for larger resolutions.
+              </p>
             </CardContent>
           </Card>
         </div>

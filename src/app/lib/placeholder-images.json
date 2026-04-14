@@ -8,6 +8,12 @@
       "imageHint": "abstract digital"
     },
     {
+      "id": "landing-preview",
+      "description": "Cinematic video generation preview",
+      "imageUrl": "https://picsum.photos/seed/omni-landing/1280/720",
+      "imageHint": "cinematic landscape"
+    },
+    {
       "id": "sample-video-1",
       "description": "Flying tiger over a futuristic city",
       "imageUrl": "https://picsum.photos/seed/tiger/600/400",

@@ -59,7 +59,6 @@ const multilingualVoiceoverFlow = ai.defineFlow(
       throw new Error('No audio media returned from the TTS model.');
     }
 
-    // The TTS model returns PCM audio, which needs to be converted to WAV for broader compatibility.
     const audioBuffer = Buffer.from(
       media.url.substring(media.url.indexOf(',') + 1),
       'base64'
@@ -82,7 +81,6 @@ async function toWav(
   rate = 24000,
   sampleWidth = 2
 ): Promise<string> {
-  // Use dynamic import for wav to avoid build-time resolution issues if possible
   const wav = await import('wav');
   
   return new Promise((resolve, reject) => {
