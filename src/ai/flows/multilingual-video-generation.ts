@@ -29,6 +29,7 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
     throw new Error('Video media part missing URL.');
   }
 
+  // Dynamic import for server-side compatibility
   const fetch = (await import('node-fetch')).default;
   const videoDownloadUrl = `${videoMediaPart.media.url}&key=${process.env.GEMINI_API_KEY}`;
   
@@ -45,10 +46,18 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
 const optimizePromptForVideo = ai.definePrompt({
   name: 'optimizePromptForVideo',
   input: { schema: MultilingualVideoGenerationInputSchema },
-  output: { schema: z.string().describe('An optimized English prompt.') },
+  output: { schema: z.object({ optimizedPrompt: z.string().describe('An optimized English prompt.') }) },
   prompt: `You are an AI assistant specialized in optimizing text prompts for video generation models.
 Translate the following prompt to English if needed and expand it with visual details, mood, and lighting.
 Original Prompt: "{{{prompt}}}"`,
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' }
+    ]
+  }
 });
 
 const multilingualVideoGenerationFlow = ai.defineFlow(
@@ -58,7 +67,10 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     outputSchema: MultilingualVideoGenerationOutputSchema,
   },
   async (input) => {
-    const { output: optimizedEnglishPrompt } = await optimizePromptForVideo(input);
+    // Generate optimized prompt with structured object output to avoid validation errors
+    const { output } = await optimizePromptForVideo(input);
+    const optimizedEnglishPrompt = output?.optimizedPrompt;
+    
     if (!optimizedEnglishPrompt) {
         throw new Error('Failed to optimize prompt.');
     }
@@ -74,7 +86,7 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     }
 
     let { operation } = await ai.generate({
-      // Using veo-2.0 for better image-to-video reliability
+      // Using veo-2.0-generate-001 for high-quality cinematic results
       model: googleAI.model('veo-2.0-generate-001'), 
       prompt: promptParts,
       config: {
@@ -87,8 +99,10 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       throw new Error('Expected operation from model.');
     }
 
+    // Wait until the long-running operation completes
     while (!operation.done) {
       operation = await ai.checkOperation(operation);
+      // Backoff strategy for checking operation status
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
@@ -98,7 +112,7 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
 
     const videoMediaPart = operation.output?.message?.content.find((p) => !!p.media);
     if (!videoMediaPart) {
-      throw new Error('No video in output.');
+      throw new Error('No video found in model output.');
     }
 
     const videoDataUri = await fetchAndEncodeVideo(videoMediaPart);

@@ -2,10 +2,7 @@
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for generating multilingual AI voiceovers from text input.
- *
- * - multilingualVoiceover - A function that generates an AI voiceover for the given text and voice configuration.
- * - MultilingualVoiceoverInput - The input type for the multilingualVoiceover function.
- * - MultilingualVoiceoverOutput - The return type for the multilingualVoiceover function.
+ * Uses dynamic imports to resolve 'wav' module resolution issues in the Next.js build environment.
  */
 
 import { ai } from '@/ai/genkit';
@@ -17,7 +14,7 @@ const MultilingualVoiceoverInputSchema = z.object({
   voiceName: z
     .string()
     .describe(
-      'The name of the prebuilt voice to use (e.g., Algenib, Achernar).' + ' For a list of available voices, refer to the Genkit documentation.'
+      'The name of the prebuilt voice to use (e.g., Algenib, Achernar).'
     ),
 });
 export type MultilingualVoiceoverInput = z.infer<typeof MultilingualVoiceoverInputSchema>;
@@ -81,11 +78,12 @@ async function toWav(
   rate = 24000,
   sampleWidth = 2
 ): Promise<string> {
-  // Dynamic import to handle CommonJS module in Next.js server environment
-  const wav = await import('wav');
+  // Dynamic import to handle CommonJS module in Next.js server environment correctly
+  const wavModule = await import('wav');
+  const wav = wavModule.default || wavModule;
   
   return new Promise((resolve, reject) => {
-    const writer = new wav.default.Writer({
+    const writer = new wav.Writer({
       channels,
       sampleRate: rate,
       bitDepth: sampleWidth * 8,
