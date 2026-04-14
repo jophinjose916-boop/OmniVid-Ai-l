@@ -5,40 +5,44 @@ service cloud.firestore {
     /**
      * OmniVid AI Security Rules
      * 
-     * Core Philosophy: 
-     * This ruleset implements a strict user-ownership model. Every piece of data in the system 
-     * is physically and logically partitioned under a specific user's path, ensuring that users 
-     * can only interact with their own information.
+     * Core Philosophy:
+     * This ruleset enforces a strict user-ownership model. All data is scoped to a specific 
+     * user and is only accessible by that authenticated user.
      * 
-     * Data Structure: 
-     * All data is organized hierarchically starting at /users/{userId}. 
-     * Subcollections like videoPrompts and generatedVideos are nested directly within the user's 
-     * document tree, creating a secure, isolated environment for each user.
+     * Data Structure:
+     * The database is organized hierarchically:
+     * - /users/{userId}: Private profile information for each user.
+     * - /users/{userId}/videos/{videoId}: Private video generation data belonging to the user.
      * 
      * Key Security Decisions:
-     * 1. Path-Based Authorization: We use the {userId} wildcard in the path to verify ownership. 
-     *    This is highly efficient as it avoids extra database reads (get() calls) during rule evaluation.
-     * 2. Relational Integrity: On document creation, we ensure that the internal data (e.g., userId 
-     *    field) matches the document path to prevent data from being orphaned or spoofed.
-     * 3. Immutability of Ownership: Critical relational fields like userId or document IDs are 
-     *    made immutable on update to prevent users from transferring ownership of data.
-     * 4. Denormalization for Authorization: User IDs are stored directly within sub-documents 
-     *    to allow for immediate validation against the authenticated user's UID.
+     * - Authorization Independence: User IDs are denormalized into every document (e.g., 'userId' field).
+     *   This allows rules to verify ownership by comparing the auth UID against both the path 
+     *   parameter and the document data without performing extra lookups (get() calls).
+     * - Denied Public Access: No data in this application is public. All read and write 
+     *   operations require a valid session where the UID matches the resource owner.
+     * - Structural Segregation: Private user content is nested under the user's root document, 
+     *   ensuring that list operations are naturally restricted to the owner's data tree.
      */
 
     // --- Helper Functions ---
 
-    /** Checks if the request is from an authenticated user. */
+    /** 
+     * @description Checks if the request is from a signed-in user.
+     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** Checks if the authenticated user's UID matches the provided userId. */
+    /** 
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** Checks if the user is the owner and the document already exists (for updates/deletes). */
+    /** 
+     * @description Verifies ownership and ensures the document exists for state-changing operations.
+     */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
@@ -46,48 +50,37 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     /**
-     * @description Rules for the UserProfile entity. Restricts access to the specific owner.
+     * @description Rules for the UserProfile entity. Restricts access to the owner of the profile.
      * @path /users/{userId}
-     * @allow Authenticated user with matching UID (get, list, create, update, delete).
-     * @deny Any user attempting to access a profile other than their own.
-     * @principle Enforces self-creation and strict path-based ownership.
+     * @allow (get) request.auth.uid == 'user_123' requesting /users/user_123
+     * @deny (list) request.auth.uid == 'user_123' requesting /users (User listing is forbidden)
+     * @principle Enforces strict path-based and data-based ownership for user profiles.
      */
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if false; // User listing is not permitted for security/privacy.
+      
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
 
       /**
-       * @description Rules for VideoPrompts. Stores requests for AI video generation.
-       * @path /users/{userId}/videoPrompts/{promptId}
-       * @allow Owner of the parent user profile (get, list, create, update, delete).
-       * @deny Unauthenticated users or authenticated users accessing another person's prompts.
-       * @principle Validates relational integrity by ensuring the internal userId matches the path.
+       * @description Rules for the Video entity. Nested under the user who created it.
+       * @path /users/{userId}/videos/{videoId}
+       * @allow (create) request.auth.uid == 'user_123' creating /users/user_123/videos/vid_456
+       * @deny (update) request.auth.uid == 'user_123' attempting to change the 'userId' field
+       * @principle Validates relational integrity by ensuring the internal userId matches the path owner.
        */
-      match /videoPrompts/{promptId} {
+      match /videos/{videoId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Rules for GeneratedVideos. Stores metadata for AI-created content.
-       * @path /users/{userId}/generatedVideos/{videoId}
-       * @allow Owner of the parent user profile (get, list, create, update, delete).
-       * @deny Users attempting to list or modify videos they do not own.
-       * @principle Protects user-generated assets via hierarchical isolation.
-       */
-      match /generatedVideos/{videoId} {
-        allow get, list: if isOwner(userId);
+        
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
         allow delete: if isExistingOwner(userId);
       }
     }
 
-    // Default deny for any paths not explicitly matched
+    // Global deny-all fallback
     match /{path=**} {
       allow read, write: if false;
     }
