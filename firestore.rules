@@ -1,94 +1,91 @@
-/**
- * OmniVid AI - Firestore Security Rules
- * 
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Access to data is tied directly to the 
- * user's Firebase Authentication UID, which must match the document path.
- * 
- * Data Structure:
- * - All user data is nested under /users/{userId}.
- * - User profiles: /users/{userId}
- * - User-generated videos: /users/{userId}/videos/{videoId}
- * 
- * Key Security Decisions:
- * - Private Access: There is no public reading or listing of user profiles or videos. 
- * - Path-Based Authorization: The UID in the path acts as the primary authority.
- * - Relational Integrity: On creation, documents must contain fields (like userId) that 
- *   match the path, ensuring that if a document is ever moved or queried outside of 
- *   the path context, its ownership remains clear.
- * - Prototyping Flexibility: Rules prioritize authorization (who can access) over schema 
- *   validation (data types), allowing for rapid application iteration.
- * 
- * Denormalization for Authorization:
- * - The Video document includes a denormalized `userId` field. This allows rules to 
- *   verify ownership by comparing the internal field with the path wildcard and the 
- *   auth token without needing to perform a get() on the parent User document.
- * 
- * Structural Segregation:
- * - User-specific content is strictly segregated into subcollections, preventing cross-user 
- *   data leaks during listing operations.
- */
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- GLOBAL HELPER FUNCTIONS ---
-
     /**
-     * Checks if the request is made by an authenticated user.
+     * OmniVid AI Security Rules
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset enforces a strict user-ownership model. Every piece of data in the system
+     * is explicitly tied to a specific user account. Access is governed by the relationship
+     * between the authenticated user's UID and the path/content of the document.
+     *
+     * DATA STRUCTURE:
+     * The database is organized hierarchically under the `/users` collection.
+     * - `/users/{userId}`: Root profile for a specific user.
+     * - `/users/{userId}/videos/{videoId}`: Private video generation data owned by the user.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Path-Based Authorization: We rely heavily on the document path wildcards (e.g., {userId})
+     *    matching the `request.auth.uid`. This provides high performance and clarity.
+     * 2. Denormalization for Integrity: Documents contain internal fields like `userId` or `id`
+     *    that must match the path parameters. This ensures that even if a document is moved or
+     *    queried out of context, its ownership remains auditable and consistent.
+     * 3. Prototyping Flexibility: While ownership is strictly enforced, the schema of content 
+     *    fields (like prompts or URLs) is not validated to allow for rapid UI/UX iteration.
+     * 4. No Public Access: By default, no data is readable or writeable by unauthenticated users
+     *    or by other authenticated users.
      */
+
+    // --- Global Helper Functions ---
+
+    /** Checks if the request is made by an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the authenticated user's UID matches the provided userId wildcard.
-     */
+    /** Checks if the authenticated user matches the provided userId from the path. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * Validates ownership and ensures the document exists for state-changing operations.
-     */
+    /** Verifies ownership and ensures the document exists for state-changing operations. */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
-    // --- COLLECTION RULES ---
+    // --- Collection Rules ---
 
     /**
-     * @description Rules for individual user profile documents.
+     * @description Rules for the User entity, representing the core profile of a person.
      * @path /users/{userId}
-     * @allow Authenticated user (get, list, create, update, delete) if their UID matches the path {userId}.
-     * @deny Any request where request.auth.uid does not match the {userId} in the path.
-     * @principle Restricts access to a user's own data tree and validates relational integrity.
+     * @allow (get) If the authenticated UID matches the {userId} wildcard.
+     * @deny (list) Global listing of users is prohibited to protect privacy.
+     * @principle Restricts access to a user's own data tree and enforces self-creation.
      */
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow get: if isOwner(userId);
+      allow list: if false; // Users cannot browse other users
+      
+      allow create: if isOwner(userId) 
+                    && request.resource.data.id == userId;
+      
+      allow update: if isExistingOwner(userId) 
+                    && request.resource.data.id == resource.data.id;
+      
       allow delete: if isExistingOwner(userId);
 
       /**
-       * @description Rules for videos generated by a specific user.
+       * @description Rules for the Video entity, representing AI-generated video metadata.
        * @path /users/{userId}/videos/{videoId}
-       * @allow User (create) if path userId matches auth UID and internal userId field matches path.
-       * @deny User (update) if they attempt to change the userId or id fields.
-       * @principle Enforces path-based ownership and ensures denormalized identity fields are immutable.
+       * @allow (list) If the user is listing documents within their own subcollection.
+       * @deny (create) If the internal userId field does not match the path owner.
+       * @principle Path-based ownership combined with relational integrity validation.
        */
       match /videos/{videoId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.id == videoId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId && request.resource.data.id == resource.data.id;
+
+        allow create: if isOwner(userId)
+                      && request.resource.data.userId == userId
+                      && request.resource.data.id == videoId;
+
+        allow update: if isExistingOwner(userId)
+                      && request.resource.data.userId == resource.data.userId
+                      && request.resource.data.id == resource.data.id;
+
         allow delete: if isExistingOwner(userId);
       }
     }
-    
-    // Default Deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
+
   }
 }
