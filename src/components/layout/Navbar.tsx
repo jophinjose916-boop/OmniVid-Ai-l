@@ -3,11 +3,11 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Video, Library, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck } from 'lucide-react';
+import { Video, Library, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck, Loader2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser, useAuth, useFirestore, initiateGoogleSignIn, setDocumentNonBlocking } from '@/firebase';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { doc } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
@@ -17,6 +17,7 @@ export function Navbar() {
   const auth = useAuth();
   const db = useFirestore();
   const appLogo = PlaceHolderImages.find(img => img.id === 'app-logo');
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   // Sync user profile to Firestore if signed in via Google
   useEffect(() => {
@@ -31,6 +32,18 @@ export function Navbar() {
       }, { merge: true });
     }
   }, [user, db]);
+
+  const handleSignIn = () => {
+    if (!auth || isSigningIn) return;
+    setIsSigningIn(true);
+    
+    // Trigger the non-blocking sign in
+    initiateGoogleSignIn(auth);
+    
+    // We set a short timeout to reset the button state, 
+    // although the auth state change will naturally handle the transition.
+    setTimeout(() => setIsSigningIn(false), 2500);
+  };
 
   const navItems = [
     { label: '4K Create', icon: Video, href: '/dashboard' },
@@ -100,10 +113,11 @@ export function Navbar() {
             <Button 
               variant="secondary" 
               className="gap-3 font-black uppercase tracking-widest gradient-bg text-white border-none h-12 px-8 rounded-2xl shadow-2xl hover:scale-105 transition-all"
-              onClick={() => auth && initiateGoogleSignIn(auth)}
+              onClick={handleSignIn}
+              disabled={isSigningIn}
             >
-              <Mail className="w-5 h-5" />
-              Log Gmail
+              {isSigningIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
+              {isSigningIn ? "Connecting..." : "Log Gmail"}
             </Button>
           )}
         </div>
