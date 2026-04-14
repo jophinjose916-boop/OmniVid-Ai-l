@@ -80,7 +80,7 @@ async function toWav(
 ): Promise<string> {
   // Dynamic import to handle CommonJS module in Next.js server environment correctly
   const wavModule = await import('wav');
-  const wav = wavModule.default || wavModule;
+  const wav = (wavModule.default || wavModule) as any;
   
   return new Promise((resolve, reject) => {
     const writer = new wav.Writer({
@@ -91,7 +91,7 @@ async function toWav(
 
     const bufs: any[] = [];
     writer.on('error', reject);
-    writer.on('data', function (d) {
+    writer.on('data', function (d: any) {
       bufs.push(d);
     });
     writer.on('end', function () {

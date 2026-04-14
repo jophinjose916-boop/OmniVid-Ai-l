@@ -1,10 +1,11 @@
+
 {
   "entities": {
     "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user of the OmniVid AI application, storing their essential profile information linked to their Google account. No sensitive authentication data like passwords are stored here.",
+      "description": "Represents a user of the OmniVid AI application, storing their essential profile information linked to their Google account.",
       "properties": {
         "id": {
           "type": "string",
@@ -12,26 +13,21 @@
         },
         "googleId": {
           "type": "string",
-          "description": "The unique identifier provided by Google OAuth for the user, used to link the user's Google account to their profile in the app."
+          "description": "The unique identifier provided by Google OAuth for the user."
         },
         "email": {
           "type": "string",
-          "description": "The user's email address obtained from Google, used for identification and communication.",
+          "description": "The user's email address obtained from Google.",
           "format": "email"
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the user profile was initially created in the system.",
+          "description": "Timestamp indicating when the user profile was initially created.",
           "format": "date-time"
         },
         "lastLoginAt": {
           "type": "string",
           "description": "Timestamp indicating the last time the user successfully logged into the application.",
-          "format": "date-time"
-        },
-        "deletedAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the user requested account deletion. This field is used for soft deletion to comply with GDPR/CCPA, allowing for potential recovery within a grace period if necessary. Null if the account is active.",
           "format": "date-time"
         }
       },
@@ -47,79 +43,42 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Video",
       "type": "object",
-      "description": "Represents a single AI-generated video, including its generation parameters, current status, and storage location. This entity tracks the lifecycle and details of each video produced by the application.",
+      "description": "Represents a single AI-generated video, including its generation parameters, current status, and storage location.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Video entity. (Primary Key)"
+          "description": "Unique identifier for the Video entity."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the UserProfile entity who initiated the video generation. (Relationship: UserProfile 1:N Video)"
+          "description": "Reference to the UserProfile entity who initiated the video generation."
         },
         "originalPrompt": {
           "type": "string",
-          "description": "The raw text prompt initially provided by the user for video generation, in their native language."
+          "description": "The raw text prompt initially provided by the user."
         },
         "optimizedPrompt": {
           "type": "string",
-          "description": "The AI-enhanced and translated (typically to English) prompt used internally by the video generation engine for better results."
-        },
-        "inputLanguage": {
-          "type": "string",
-          "description": "The ISO 639-1 language code (or similar identifier) of the original prompt provided by the user."
-        },
-        "outputLanguage": {
-          "type": "string",
-          "description": "The ISO 639-1 language code (or similar identifier) chosen for the video's voiceover or subtitles."
-        },
-        "visualStyle": {
-          "type": "string",
-          "description": "The chosen or AI-suggested visual style applied to the video (e.g., 'Cinematic', 'Anime', 'Realistic')."
+          "description": "The AI-enhanced English prompt used for video generation."
         },
         "status": {
           "type": "string",
-          "description": "The current status of the video generation process (e.g., 'queued', 'processing', 'completed', 'failed', 'blocked')."
-        },
-        "generationMode": {
-          "type": "string",
-          "description": "Indicates the generation queue used, either 'Standard' (unlimited, longer queue) or 'FastPass' (ad-supported, accelerated generation)."
-        },
-        "resolution": {
-          "type": "string",
-          "description": "The resolution of the generated video (e.g., '720p')."
+          "description": "The current status of the video generation process (e.g., 'completed', 'failed')."
         },
         "storageUrl": {
           "type": "string",
-          "description": "The secure URL to the generated video file stored in Google Cloud Storage.",
+          "description": "The secure URL to the generated video file.",
           "format": "uri"
         },
         "thumbnailUrl": {
           "type": "string",
-          "description": "The secure URL to a thumbnail image of the video, used for previewing.",
+          "description": "The secure URL to a thumbnail image of the video.",
           "format": "uri"
-        },
-        "durationSeconds": {
-          "type": "number",
-          "description": "The total duration of the generated video in seconds."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the video generation request was initiated by the user.",
+          "description": "Timestamp indicating when the video was created.",
           "format": "date-time"
-        },
-        "completedAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the video generation process was successfully completed and the video became available. Null if not yet completed.",
-          "format": "date-time"
-        },
-        "isWatermarked": {
-          "type": "boolean",
-          "description": "A boolean flag indicating whether the video contains an invisible digital watermark (always true for the free tier to identify it as AI-generated)."
-        },
-        "contentBlockedReason": {
-          "type": "string",
-          "description": "If the video generation was blocked due to content safety violations, this field provides the reason (e.g., 'violence', 'illegal content', 'deepfake'). Null if not blocked."
         }
       },
       "required": [
@@ -127,24 +86,18 @@
         "userId",
         "originalPrompt",
         "optimizedPrompt",
-        "inputLanguage",
-        "outputLanguage",
-        "visualStyle",
         "status",
-        "generationMode",
-        "resolution",
         "storageUrl",
         "thumbnailUrl",
-        "durationSeconds",
-        "createdAt",
-        "isWatermarked"
+        "createdAt"
       ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "anonymous",
+      "google.com"
     ]
   },
   "firestore": {
@@ -156,13 +109,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores a user's profile information. Access is restricted to the authenticated user matching `userId`. The document's `id` field must match the `userId` in the path for robust ownership verification, supporting authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user, matching `request.auth.uid`."
-            }
-          ]
+          "description": "Stores a user's profile information."
         }
       },
       {
@@ -172,20 +119,9 @@
           "schema": {
             "$ref": "#/backend/entities/Video"
           },
-          "description": "Stores individual video details generated by a user. The `userId` from the path is explicitly stored in each `Video` document (`resource.data.userId`) for robust ownership verification, ensuring authorization independence. Access is restricted to the authenticated user matching `userId`.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns this video, matching `request.auth.uid` and `resource.data.userId`."
-            },
-            {
-              "name": "videoId",
-              "description": "The unique identifier for the specific video."
-            }
-          ]
+          "description": "Stores individual video details generated by a user."
         }
       }
-    ],
-    "reasoning": "The Firestore structure for OmniVid AI is designed around a hierarchical, user-centric model, prioritizing strong authorization independence, simple security rules, and efficient querying capabilities.\n\n1.  **User-Centric Root Collections:** The primary collection is `/users/{userId}`, directly representing individual `UserProfile` entities. This path-based ownership is fundamental for securing private user data. The `userId` in the path directly corresponds to `request.auth.uid`, making authorization checks straightforward and atomic for user profiles.\n\n2.  **Hierarchical Subcollections for User Data:** User-generated videos are stored in a subcollection: `/users/{userId}/videos/{videoId}`. This continues the hierarchical ownership model, clearly indicating that `Video` entities belong to a specific `UserProfile`.\n\n3.  **Authorization Independence (CRITICAL - Denormalization Strategy):**\n    *   For `UserProfile` documents at `/users/{userId}`, the `id` field within the `UserProfile` document is explicitly designed to match the `{userId}` in the path (`resource.data.id == userId`). This explicit mapping of the `userId` within the document (which is implicitly the owner) ensures that rules do not need to perform `get()` operations on parent documents to determine ownership. Authorization is solely based on `request.auth.uid` matching the `{userId}` wildcard in the path, and optionally validating `resource.data.id` against the path `userId` for data integrity.\n    *   For `Video` documents at `/users/{userId}/videos/{videoId}`, the `Video` entity already includes a `userId` field. This `userId` field *must* match the `{userId}` wildcard in the path. This explicit denormalization of the `ownerId` (`userId`) within each `Video` document allows security rules to check `request.auth.uid == userId` (from path) AND `resource.data.userId == userId` (from document). This eliminates any need to `get()` the parent `UserProfile` document to determine who owns the video. Consequently, actions like creating a `Video` can be atomic without requiring a separate `UserProfile` lookup in rules, enhancing performance and simplifying rule logic.\n\n4.  **Support for Query-Aware Security Rules (QAPs - Rules are not Filters):**\n    *   **Structural Segregation:** All documents within `/users/{userId}` (UserProfile) share the same security posture (owner-only). Similarly, all documents within `/users/{userId}/videos/{videoId}` (Video) also share the same security posture (owner-only). There's no mixing of public/private data within the same collection, which would otherwise require complex filtering in rules that cannot be enforced for `list` operations.\n    *   **Efficient Listing:** A user can `list` all their own videos by querying the `/users/{request.auth.uid}/videos` subcollection. The security rules can easily enforce that `request.auth.uid` matches the `{userId}` in the path for *all* reads (get/list), ensuring that users can only retrieve their own content. The denormalized `userId` field in the `Video` documents further strengthens this by making the ownership explicit within each document, allowing for a robust check that `resource.data.userId == request.auth.uid` without requiring complex query filters or `get()` calls. This structure inherently supports QAPs by ensuring that any `list` operation is already constrained by the authenticated user's ID, making the server-side security rule simple and efficient.\n\nThis structure inherently scales well, as user data is sharded by `userId`, preventing hot spots and allowing for efficient, owner-scoped queries."
+    ]
   }
 }
