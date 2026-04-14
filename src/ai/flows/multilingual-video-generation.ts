@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow for generating high-quality videos from text prompts in multiple languages.
+ * @fileOverview A Genkit flow for generating high-quality videos from text prompts and optional image references.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,7 +10,8 @@ import { googleAI } from '@genkit-ai/google-genai';
 import { MediaPart } from 'genkit';
 
 const MultilingualVideoGenerationInputSchema = z.object({
-  prompt: z.string().describe('The text prompt for video generation, in any language.'),
+  prompt: z.string().describe('The text prompt for video generation.'),
+  photoDataUri: z.string().optional().describe('An optional photo reference as a data URI.'),
 });
 export type MultilingualVideoGenerationInput = z.infer<typeof MultilingualVideoGenerationInputSchema>;
 
@@ -18,7 +19,7 @@ const MultilingualVideoGenerationOutputSchema = z.object({
   videoDataUri: z
     .string()
     .describe(
-      "The generated video as a data URI that must include a MIME type (video/mp4) and use Base64 encoding."
+      "The generated video as a data URI (video/mp4)."
     ),
 });
 export type MultilingualVideoGenerationOutput = z.infer<typeof MultilingualVideoGenerationOutputSchema>;
@@ -62,9 +63,24 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
         throw new Error('Failed to optimize prompt.');
     }
 
+    const promptParts: any[] = [{ text: optimizedEnglishPrompt }];
+    if (input.photoDataUri) {
+      promptParts.push({
+        media: {
+          url: input.photoDataUri,
+          contentType: 'image/jpeg'
+        }
+      });
+    }
+
     let { operation } = await ai.generate({
-      model: googleAI.model('veo-3.0-generate-preview'), 
-      prompt: optimizedEnglishPrompt,
+      // Using veo-2.0 for better image-to-video reliability
+      model: googleAI.model('veo-2.0-generate-001'), 
+      prompt: promptParts,
+      config: {
+        durationSeconds: 5,
+        aspectRatio: '16:9'
+      }
     });
 
     if (!operation) {
