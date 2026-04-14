@@ -1,8 +1,10 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Globe2, ShieldCheck, Zap, ArrowRight, Video, Play, Clock, Fingerprint, Mail } from 'lucide-react';
+import { Sparkles, Globe2, ShieldCheck, Zap, ArrowRight, Video, Play, Clock, Fingerprint, Mail, Volume2, Mic2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const landingPreview = PlaceHolderImages.find(img => img.id === 'landing-preview');
@@ -13,16 +15,16 @@ export default function Home() {
       a: "Yes! OmniVid AI features a universal translation engine. Whether you prompt in Malayalam, English, German, or any other global language, our AI will understand the intent and expand it into a 4K masterpiece."
     },
     {
+      q: "Does it convert text into audio also?",
+      a: "Absolutely. Our Universal Text-to-Audio converter allows you to transform any text into professional AI narration. You can choose from specialized personas including Old Man, Old Woman, Child, and narrative Male/Female voices in Malayalam, English, and German."
+    },
+    {
       q: "What is the '30-Minute Extended Session'?",
       a: "OmniVid AI is designed for long-form storytelling. While individual renders provide the maximum allowed high-fidelity sequences, you can create and compile unlimited sequences to build a 30-minute cinematic feature."
     },
     {
       q: "How does the Gmail and Biometric security work?",
-      a: "We integrate with Google's professional authentication. By logging in with Gmail, you enable biometric-ready session management powered by Google Assistant technology, keeping your 30-minute 4K creations private and secure."
-    },
-    {
-      q: "Is 4K generation really unlimited?",
-      a: "Absolutely. We offer no-limit 4K video rendering for all users who sign in with Gmail. Our mission is to democratize high-end AI cinematography."
+      a: "We integrate with Google's professional authentication. By logging in with Gmail, you enable biometric-ready session management powered by Google Assistant technology, keeping your 30-minute 4K creations and voiceovers private and secure."
     }
   ];
 
@@ -43,11 +45,11 @@ export default function Home() {
             </div>
             
             <h1 className="text-5xl md:text-8xl font-headline font-bold leading-tight tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-              Any Language. <span className="gradient-text">30-Min 4K</span> Video.
+              Any Language. <span className="gradient-text">30-Min 4K</span> Video & Audio.
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-              നിങ്ങളുടെ ഏത് ഭാഷയും 30 മിനിറ്റ് സിനിമയാക്കൂ. Log with Gmail and turn Malayalam, English, German, or any global text into stunning 4K cinematic reality.
+              നിങ്ങളുടെ ഏത് ഭാഷയും 30 മിനിറ്റ് സിനിമയാക്കൂ. Log with Gmail and turn Malayalam, English, German, or any global text into stunning 4K cinematic reality and professional AI voiceovers.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
@@ -74,7 +76,7 @@ export default function Home() {
                 </div>
                 <div className="absolute top-6 right-6">
                    <Badge className="bg-primary/20 text-primary border-primary/30 text-xs px-3 py-1 font-bold tracking-widest uppercase">
-                    No-Limit 30-Min Masterpiece
+                    Unlimited 30-Min Masterpiece
                    </Badge>
                 </div>
                 <div className="absolute bottom-8 left-8 flex items-center gap-3 bg-black/70 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/20">
@@ -83,7 +85,7 @@ export default function Home() {
                     <div className="w-8 h-8 rounded-full border-2 border-background bg-blue-500 flex items-center justify-center text-[10px] font-bold">EN</div>
                     <div className="w-8 h-8 rounded-full border-2 border-background bg-yellow-500 flex items-center justify-center text-[10px] font-bold">DE</div>
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-white/80">Universal Language Engine</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-white/80">Universal Audio & Video Engine</span>
                 </div>
               </div>
             </div>
@@ -97,10 +99,10 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
             <div className="space-y-6 text-center md:text-left group">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto md:mx-0 group-hover:bg-primary/20 transition-colors">
-                <Globe2 className="text-primary w-8 h-8" />
+                <Volume2 className="text-primary w-8 h-8" />
               </div>
-              <h3 className="text-2xl font-headline font-bold">Any Language Support</h3>
-              <p className="text-muted-foreground text-lg">From Malayalam to German to English—our universal AI translates and scripts your vision flawlessly into 4K cinematic scenes.</p>
+              <h3 className="text-2xl font-headline font-bold">Text-to-Audio Converter</h3>
+              <p className="text-muted-foreground text-lg">Convert any text into high-quality AI narration. Choose between old men, women, and children personas in Malayalam, English, and German.</p>
             </div>
             <div className="space-y-6 text-center md:text-left group">
               <div className="w-16 h-16 rounded-2xl bg-secondary/10 flex items-center justify-center mx-auto md:mx-0 group-hover:bg-secondary/20 transition-colors">
@@ -114,7 +116,7 @@ export default function Home() {
                 <Zap className="text-green-500 w-8 h-8" />
               </div>
               <h3 className="text-2xl font-headline font-bold">Unlimited 30-Min 4K</h3>
-              <p className="text-muted-foreground text-lg">No time limits on creativity. Build extended long-form cinematic features up to 30 minutes with high-bitrate 4K rendering.</p>
+              <p className="text-muted-foreground text-lg">No time limits on creativity. Build extended long-form cinematic features up to 30 minutes with high-bitrate 4K rendering and voiceovers.</p>
             </div>
           </div>
         </div>
@@ -162,5 +164,3 @@ export default function Home() {
     </div>
   );
 }
-
-import { Badge } from '@/components/ui/badge';

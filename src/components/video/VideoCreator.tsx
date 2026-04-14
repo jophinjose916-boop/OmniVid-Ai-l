@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock, Fingerprint, Mail, UserCircle } from 'lucide-react';
+import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock, Fingerprint, Mail, UserCircle, Baby, User, UserPlus } from 'lucide-react';
 import { optimizePrompt } from '@/ai/flows/prompt-optimization';
 import { multilingualVideoGeneration } from '@/ai/flows/multilingual-video-generation';
 import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
@@ -274,7 +275,7 @@ export function VideoCreator() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-headline font-bold flex items-center gap-3">
                     <Volume2 className="w-6 h-6 text-primary" />
-                    Universal Voice
+                    Text-to-Audio
                   </h3>
                   <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1 border border-white/5">
                     <Button 
@@ -305,20 +306,22 @@ export function VideoCreator() {
                 </div>
                 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Select AI Persona</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">AI Persona Library</label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                     <SelectTrigger className="w-full bg-background/50 border-white/5 h-14 rounded-xl">
-                      <SelectValue placeholder="Select voice persona" />
+                      <SelectValue placeholder="Select persona" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-white/10">
                       {VOICES.map(voice => (
                         <SelectItem key={voice.id} value={voice.id}>
-                          <div className="flex flex-col text-left py-1">
-                            <span className="font-bold text-sm flex items-center gap-2">
-                              <UserCircle className="w-3.5 h-3.5 opacity-50" />
-                              {voice.name}
-                            </span>
-                            <span className="text-[10px] opacity-60 uppercase tracking-tighter">{voice.description}</span>
+                          <div className="flex items-center gap-3 py-1">
+                            {voice.id === 'Deneb' ? <Baby className="w-4 h-4 opacity-50" /> : 
+                             voice.id === 'Algenib' || voice.id === 'Hadrit' ? <User className="w-4 h-4 opacity-50" /> : 
+                             <UserCircle className="w-4 h-4 opacity-50" />}
+                            <div className="flex flex-col text-left">
+                              <span className="font-bold text-sm">{voice.name}</span>
+                              <span className="text-[10px] opacity-60 uppercase tracking-tighter">{voice.description}</span>
+                            </div>
                           </div>
                         </SelectItem>
                       ))}
@@ -328,11 +331,11 @@ export function VideoCreator() {
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Universal Script</label>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Narration Script</label>
                     {isGeneratingScript && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
                   </div>
                   <Textarea 
-                    placeholder="Narration script in any language..."
+                    placeholder="Type anything here to convert to audio..."
                     className="bg-background/50 border-white/5 min-h-[120px] text-sm leading-relaxed rounded-xl"
                     value={voiceScript}
                     onChange={(e) => setVoiceScript(e.target.value)}
@@ -346,13 +349,19 @@ export function VideoCreator() {
                   disabled={isGeneratingVoice || !voiceScript}
                 >
                   {isGeneratingVoice ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic2 className="w-5 h-5" />}
-                  {isGeneratingVoice ? "Synthesizing Persona..." : "Generate AI Voiceover"}
+                  {isGeneratingVoice ? "Synthesizing..." : "Convert Text to Audio"}
                 </Button>
 
                 {audioUrl && (
                   <div className="pt-4 animate-in slide-in-from-top-4 duration-300">
-                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                      <audio src={audioUrl} controls className="w-full h-10 filter invert opacity-70" />
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex flex-col gap-3">
+                       <audio src={audioUrl} controls className="w-full h-10 filter invert opacity-70" />
+                       <Button size="sm" variant="ghost" className="h-8 gap-2 text-[10px] font-bold uppercase tracking-widest" asChild>
+                         <a href={audioUrl} download="ai-voiceover.wav">
+                           <Download className="w-3.5 h-3.5" />
+                           Download Audio
+                         </a>
+                       </Button>
                     </div>
                   </div>
                 )}
