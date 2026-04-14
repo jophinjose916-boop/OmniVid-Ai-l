@@ -1,4 +1,3 @@
-
 {
   "placeholderImages": [
     {
@@ -9,7 +8,7 @@
     },
     {
       "id": "landing-preview",
-      "description": "Cinematic video generation preview",
+      "description": "Cinematic video generation preview showing a majestic landscape",
       "imageUrl": "https://picsum.photos/seed/omni-landing/1280/720",
       "imageHint": "cinematic landscape"
     },
@@ -27,7 +26,7 @@
     },
     {
       "id": "user-avatar",
-      "description": "Default user avatar",
+      "description": "Default user avatar portrait",
       "imageUrl": "https://picsum.photos/seed/user/100/100",
       "imageHint": "portrait"
     }

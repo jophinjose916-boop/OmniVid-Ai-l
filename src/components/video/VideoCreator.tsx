@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -45,7 +44,10 @@ export function VideoCreator() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setPhotoDataUri(reader.result as string);
+      reader.onloadend = () => {
+        setPhotoDataUri(reader.result as string);
+        toast({ title: "Photo Reference Added", description: "AI will now 'Edit' this photo into your video." });
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -68,7 +70,7 @@ export function VideoCreator() {
         setIsGeneratingScript(false);
       }
       
-      toast({ title: "Vision Optimized / ദൃശ്യം മെച്ചപ്പെടുത്തി", description: "Prompt enhanced and script suggested." });
+      toast({ title: "Vision Optimized / ദൃശ്യം മെച്ചപ്പെടുത്തി", description: "Visual direction and script generated." });
     } catch (error) {
       toast({ variant: "destructive", title: "Optimization Failed", description: "Please try again." });
     } finally {
@@ -101,6 +103,7 @@ export function VideoCreator() {
     setVideoUrl('');
 
     try {
+      // Passes both the text prompt (as optimized English) and the image if provided
       const videoResult = await multilingualVideoGeneration({ 
         prompt: promptToUse,
         photoDataUri: photoDataUri || undefined
@@ -116,7 +119,7 @@ export function VideoCreator() {
         userId: user.uid,
         originalPrompt: userPrompt,
         optimizedPrompt: optimizedPrompt || userPrompt,
-        inputLanguage: 'auto',
+        inputLanguage: userPrompt.match(/[അ-ഹ]/) ? 'ml' : 'en',
         outputLanguage: 'en',
         visualStyle: 'Cinematic',
         status: 'completed',
@@ -129,10 +132,10 @@ export function VideoCreator() {
         isWatermarked: true,
       }, { merge: true });
       
-      toast({ title: "Magic Complete! / സമാപിച്ചു!", description: "Your cinematic edit is ready." });
+      toast({ title: "Magic Complete! / സമാപിച്ചു!", description: "Your AI-Edited cinematic video is ready." });
     } catch (error) {
       console.error(error);
-      toast({ variant: "destructive", title: "Generation Failed", description: "The engine is busy. Please try again." });
+      toast({ variant: "destructive", title: "Generation Failed", description: "The engine is busy or the prompt was blocked. Please try again." });
     } finally {
       setIsGenerating(false);
     }
@@ -147,17 +150,19 @@ export function VideoCreator() {
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Languages className="w-4 h-4" />
-                Describe Vision (Malayalam / English)
+                Vision Prompt (Malayalam / English)
               </label>
-              <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center gap-1">
-                <Zap className="w-3 h-3 fill-primary" />
-                AI Editing Active
-              </div>
+              {photoDataUri && (
+                <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center gap-1 font-bold animate-pulse">
+                  <Zap className="w-3 h-3 fill-primary" />
+                  AI IMAGE EDITING MODE
+                </div>
+              )}
             </div>
             
             <div className="relative">
               <Textarea
-                placeholder="e.g., പച്ചപ്പുള്ള ഒരു ഗ്രാമം... / A lush green village..."
+                placeholder="Describe your scene: e.g., പച്ചപ്പുള്ള ഒരു ഗ്രാമം... / A lush green village..."
                 className="min-h-[100px] bg-card/50 border-white/10 focus:ring-primary text-lg resize-none pr-32"
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
@@ -168,34 +173,38 @@ export function VideoCreator() {
                   variant="secondary" 
                   onClick={handleOptimize} 
                   disabled={isOptimizing || !userPrompt}
-                  className="gap-2"
+                  className="gap-2 font-bold"
                 >
                   {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                  AI Enhance
+                  AI Improve
                 </Button>
               </div>
             </div>
 
-            {/* Photo Reference (AI Editing) */}
+            {/* AI Image-to-Video Upload */}
             <div className="flex items-center gap-4">
               {!photoDataUri ? (
                 <Button 
                   variant="outline" 
-                  className="border-dashed h-24 w-full flex-col gap-2 hover:bg-primary/5 transition-colors"
+                  className="border-dashed h-24 w-full flex-col gap-2 hover:bg-primary/5 transition-colors group"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <ImagePlus className="w-6 h-6 opacity-50" />
-                  <span className="text-xs opacity-50">Upload photo reference for AI Editing</span>
+                  <ImagePlus className="w-6 h-6 opacity-50 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs opacity-50">Upload photo reference (AI Image-to-Video Editing)</span>
                 </Button>
               ) : (
-                <div className="relative h-24 w-40 rounded-lg overflow-hidden border border-primary/30 group">
+                <div className="relative h-24 w-40 rounded-lg overflow-hidden border-2 border-primary/50 group shadow-lg">
                   <img src={photoDataUri} alt="Reference" className="w-full h-full object-cover" />
-                  <button 
-                    onClick={() => setPhotoDataUri(null)}
-                    className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                     <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => setPhotoDataUri(null)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -205,7 +214,7 @@ export function VideoCreator() {
               <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2 animate-in zoom-in-95 duration-300">
                 <div className="text-xs font-bold text-primary flex items-center gap-2 uppercase tracking-tight">
                   <Sparkles className="w-3 h-3" />
-                  Optimized Visual Direction
+                  Visual Masterplan (Editable)
                 </div>
                 <Textarea 
                   value={optimizedPrompt}
@@ -216,7 +225,7 @@ export function VideoCreator() {
             )}
           </div>
 
-          <Card className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center group border-white/5 shadow-2xl rounded-2xl">
+          <Card className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center group border-white/5 shadow-2xl rounded-2xl ring-1 ring-white/10">
             {videoUrl ? (
               <video src={videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
             ) : isGenerating ? (
@@ -225,27 +234,29 @@ export function VideoCreator() {
                   <Loader2 className="w-12 h-12 text-primary animate-spin" />
                   <div className="absolute inset-0 blur-xl gradient-bg opacity-30 animate-pulse-subtle"></div>
                 </div>
-                <p className="text-muted-foreground animate-pulse font-headline">Creating Cinematic Masterpiece...</p>
+                <p className="text-muted-foreground animate-pulse font-headline font-bold">Rendering Cinematic Sequence...</p>
+                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">Veo 2.0 Engine Active</p>
               </div>
             ) : (
               <div className="text-center text-muted-foreground space-y-2 px-8">
                 <Play className="w-12 h-12 mx-auto opacity-10" />
-                <p className="font-headline text-lg opacity-40">Preview your creation here</p>
+                <p className="font-headline text-lg opacity-40">Preview Screen</p>
+                <p className="text-xs opacity-20">Your video will appear here after generation</p>
               </div>
             )}
           </Card>
           
           <div className="flex gap-4">
             <Button 
-              className="flex-1 gradient-bg text-white h-14 text-xl font-headline font-bold hover:opacity-90 transition-all shadow-lg"
+              className="flex-1 gradient-bg text-white h-14 text-xl font-headline font-bold hover:opacity-90 transition-all shadow-xl hover:scale-[1.01] active:scale-95"
               onClick={handleGenerate}
               disabled={isGenerating || !userPrompt || isUserLoading}
             >
-              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-              {isGenerating ? "EDITING VIDEO..." : "GENERATE AI VIDEO"}
+              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Play className="w-5 h-5 mr-2 fill-white" />}
+              {isGenerating ? "EDITING VIDEO..." : (photoDataUri ? "GENERATE FROM PHOTO" : "GENERATE AI VIDEO")}
             </Button>
             {videoUrl && (
-               <Button variant="outline" size="icon" className="h-14 w-14 rounded-xl" asChild>
+               <Button variant="outline" size="icon" className="h-14 w-14 rounded-xl border-primary/20 hover:bg-primary/5" asChild>
                 <a href={videoUrl} download="omni-vid.mp4">
                   <Download className="w-6 h-6" />
                 </a>
@@ -256,16 +267,16 @@ export function VideoCreator() {
 
         {/* Right: Voice Settings */}
         <div className="space-y-6">
-          <Card className="bg-card/50 border-white/10 overflow-hidden rounded-2xl">
+          <Card className="bg-card/50 border-white/10 overflow-hidden rounded-2xl ring-1 ring-white/5 shadow-xl">
             <CardContent className="p-6 space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-headline font-bold flex items-center gap-2">
                   <Volume2 className="w-5 h-5 text-primary" />
-                  Voiceover / ശബ്ദം
+                  Narration / ശബ്ദം
                 </h3>
                 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Select Narrator</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Select AI Voice</label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                     <SelectTrigger className="w-full bg-background/50 border-white/5 h-12">
                       <SelectValue placeholder="Select voice" />
@@ -285,11 +296,11 @@ export function VideoCreator() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Voice Script</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Voiceover Script</label>
                     {isGeneratingScript && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
                   </div>
                   <Textarea 
-                    placeholder="Enter Malayalam or English script..."
+                    placeholder="Poetic Malayalam or English narration script..."
                     className="bg-background/50 border-white/5 min-h-[100px] text-sm leading-relaxed"
                     value={voiceScript}
                     onChange={(e) => setVoiceScript(e.target.value)}
@@ -303,7 +314,7 @@ export function VideoCreator() {
                   disabled={isGeneratingVoice || !voiceScript}
                 >
                   {isGeneratingVoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic2 className="w-4 h-4" />}
-                  Generate Narration
+                  {isGeneratingVoice ? "Synthesizing..." : "Generate AI Voice"}
                 </Button>
 
                 {audioUrl && (
@@ -315,14 +326,14 @@ export function VideoCreator() {
             </CardContent>
           </Card>
 
-          <Card className="bg-primary/5 border-primary/20 rounded-2xl">
+          <Card className="bg-primary/5 border-primary/20 rounded-2xl shadow-inner">
             <CardContent className="p-4 space-y-3">
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                 <Zap className="w-3 h-3 fill-primary" />
-                Creative Assistant
+                Editing Tip
               </h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Malayalam prompts are automatically translated and expanded for cinematic depth. Upload a photo to use it as a starting frame for AI Video Editing.
+                <strong>Image Editing:</strong> Uploading a photo uses it as the "seed" for the AI video, ensuring consistency with your starting frame. Perfect for bringing static photos to life!
               </p>
             </CardContent>
           </Card>

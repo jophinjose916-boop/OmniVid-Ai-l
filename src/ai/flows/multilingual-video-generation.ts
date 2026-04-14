@@ -1,7 +1,8 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for generating high-quality videos from text prompts and optional image references.
+ * It uses a two-step process: first optimizing the user's prompt (Malayalam/English) into a detailed English
+ * visual description, then passing that description (and optional image) to the Veo model.
  */
 
 import { ai } from '@/ai/genkit';
@@ -11,7 +12,7 @@ import { MediaPart } from 'genkit';
 
 const MultilingualVideoGenerationInputSchema = z.object({
   prompt: z.string().describe('The text prompt for video generation.'),
-  photoDataUri: z.string().optional().describe('An optional photo reference as a data URI.'),
+  photoDataUri: z.string().optional().describe('An optional photo reference as a data URI to use as a starting frame.'),
 });
 export type MultilingualVideoGenerationInput = z.infer<typeof MultilingualVideoGenerationInputSchema>;
 
@@ -24,12 +25,15 @@ const MultilingualVideoGenerationOutputSchema = z.object({
 });
 export type MultilingualVideoGenerationOutput = z.infer<typeof MultilingualVideoGenerationOutputSchema>;
 
+/**
+ * Helper to download a video from a URL and encode it as a data URI.
+ * Uses dynamic import for node-fetch to work in Next.js server actions.
+ */
 async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
   if (!videoMediaPart.media || !videoMediaPart.media.url) {
     throw new Error('Video media part missing URL.');
   }
 
-  // Dynamic import for server-side compatibility
   const fetch = (await import('node-fetch')).default;
   const videoDownloadUrl = `${videoMediaPart.media.url}&key=${process.env.GEMINI_API_KEY}`;
   
@@ -43,13 +47,30 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
   return `data:video/mp4;base64,${buffer.toString('base64')}`;
 }
 
+/**
+ * Prompt to turn simple user descriptions into high-quality visual prompts.
+ * Returns an object to ensure structured parsing.
+ */
 const optimizePromptForVideo = ai.definePrompt({
   name: 'optimizePromptForVideo',
   input: { schema: MultilingualVideoGenerationInputSchema },
-  output: { schema: z.object({ optimizedPrompt: z.string().describe('An optimized English prompt.') }) },
-  prompt: `You are an AI assistant specialized in optimizing text prompts for video generation models.
-Translate the following prompt to English if needed and expand it with visual details, mood, and lighting.
-Original Prompt: "{{{prompt}}}"`,
+  output: { 
+    schema: z.object({ 
+      optimizedPrompt: z.string().describe('A detailed, cinematic English prompt describing the visual scene.') 
+    }) 
+  },
+  prompt: `You are an expert director specializing in AI cinematography.
+Your task is to take a user's prompt (which might be in Malayalam or English) and expand it into a detailed visual description for a high-end video generation model (Veo).
+
+If the input is in Malayalam (മലയാളം), accurately translate the core intent to English first.
+
+Expansion guidelines:
+1. Describe textures, lighting (e.g., golden hour, rim lighting), and atmosphere.
+2. Define camera movement (e.g., slow drone sweep, handheld tracking).
+3. Ensure the scene feels cinematic and "edited" for high quality.
+
+User Prompt: "{{{prompt}}}"
+{{#if photoDataUri}}Note: The user provided a photo as a starting reference. The video should evolve naturally from this image.{{/if}}`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -67,14 +88,15 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     outputSchema: MultilingualVideoGenerationOutputSchema,
   },
   async (input) => {
-    // Generate optimized prompt with structured object output to avoid validation errors
+    // 1. Optimize the prompt
     const { output } = await optimizePromptForVideo(input);
     const optimizedEnglishPrompt = output?.optimizedPrompt;
     
     if (!optimizedEnglishPrompt) {
-        throw new Error('Failed to optimize prompt.');
+        throw new Error('Failed to generate an optimized visual description.');
     }
 
+    // 2. Prepare content parts for Veo (Text + optional Image)
     const promptParts: any[] = [{ text: optimizedEnglishPrompt }];
     if (input.photoDataUri) {
       promptParts.push({
@@ -85,8 +107,8 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       });
     }
 
+    // 3. Generate Video using Veo
     let { operation } = await ai.generate({
-      // Using veo-2.0-generate-001 for high-quality cinematic results
       model: googleAI.model('veo-2.0-generate-001'), 
       prompt: promptParts,
       config: {
@@ -96,25 +118,25 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     });
 
     if (!operation) {
-      throw new Error('Expected operation from model.');
+      throw new Error('Video generation failed to start.');
     }
 
-    // Wait until the long-running operation completes
+    // 4. Wait for completion (Long Running Operation)
     while (!operation.done) {
       operation = await ai.checkOperation(operation);
-      // Backoff strategy for checking operation status
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
     if (operation.error) {
-      throw new Error(`Generation failed: ${operation.error.message}`);
+      throw new Error(`Generation error: ${operation.error.message}`);
     }
 
     const videoMediaPart = operation.output?.message?.content.find((p) => !!p.media);
     if (!videoMediaPart) {
-      throw new Error('No video found in model output.');
+      throw new Error('The model completed but did not return a video.');
     }
 
+    // 5. Download and return as data URI
     const videoDataUri = await fetchAndEncodeVideo(videoMediaPart);
     return { videoDataUri };
   }
