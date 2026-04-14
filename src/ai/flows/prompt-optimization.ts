@@ -1,8 +1,7 @@
 'use server';
 /**
- * @fileOverview Optimizes user prompts into AI-friendly cinematic English descriptions.
- * Handles Malayalam, English, and German inputs, ensuring the core intent is preserved
- * while expanding on visual details for the video generation model.
+ * @fileOverview Universal prompt optimizer. 
+ * Detects and translates any input language into high-fidelity cinematic English for the video model.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,7 +11,7 @@ const PromptOptimizationInputSchema = z.object({
   userPrompt: z
     .string()
     .describe(
-      'The user-provided prompt, in Malayalam, German, or English, to be optimized for AI video generation.'
+      'The user-provided prompt in any language (Malayalam, English, German, or any other) to be optimized for AI video generation.'
     ),
 });
 export type PromptOptimizationInput = z.infer<typeof PromptOptimizationInputSchema>;
@@ -20,7 +19,7 @@ export type PromptOptimizationInput = z.infer<typeof PromptOptimizationInputSche
 const PromptOptimizationOutputSchema = z.object({
   optimizedPrompt: z
     .string()
-    .describe('The AI-friendly English version of the user prompt.'),
+    .describe('The AI-friendly English version of the user prompt, expanded with cinematic details.'),
 });
 export type PromptOptimizationOutput = z.infer<typeof PromptOptimizationOutputSchema>;
 
@@ -28,16 +27,16 @@ const optimizePromptForVideo = ai.definePrompt({
   name: 'optimizePromptForVideo',
   input: { schema: PromptOptimizationInputSchema },
   output: { schema: PromptOptimizationOutputSchema },
-  prompt: `You are an expert director and prompt engineer for AI video models.
-Your task is to take a user's prompt (which may be in Malayalam, German, or English) and expand it into a detailed, cinematic English visual description for an AI video generator.
+  prompt: `You are a world-class AI Cinematographer.
+Your task is to take a user's prompt (provided in any language) and expand it into a detailed, cinematic English visual masterplan for an AI video generator.
 
-Guidelines:
-1. If the input is in Malayalam (മലയാളം) or German (Deutsch), translate the core concept accurately to English first.
-2. Expand the prompt with specific visual details: textures, lighting (e.g., volumetric rays, golden hour), camera movement (e.g., slow drone sweep, cinematic pan), and atmospheric effects.
-3. Keep the output in English, as it is the native language for the video model.
-4. Ensure the visual style is cinematic and high-fidelity.
+Expansion Guidelines:
+1. Universal Translation: If the input is not in English (e.g., Malayalam, German, Hindi, Spanish, etc.), accurately translate the core poetic intent to English first.
+2. Cinematic Detail: Add specific visual instructions for textures, volumetric lighting, atmospheric conditions, and camera techniques (e.g., anamorphic flares, 65mm drone sweep).
+3. 30-Minute Context: Describe the scene in a way that supports an extended, immersive cinematic sequence.
+4. Output: Always provide the final optimized prompt in English.
 
-User Prompt: "{{{userPrompt}}}"`,
+User Input: "{{{userPrompt}}}"`,
 });
 
 export async function optimizePrompt(

@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview A Genkit flow for generating high-quality videos from text prompts and optional image references.
- * Optimized for extended cinematic duration and robust schema handling, supporting Malayalam, English, and German.
+ * @fileOverview Universal 4K Video Generation Flow.
+ * Supports any language input, image editing, and extended cinematic rendering.
  */
 
 import { ai } from '@/ai/genkit';
@@ -9,7 +9,7 @@ import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 const MultilingualVideoGenerationInputSchema = z.object({
-  prompt: z.string().describe('The text prompt for video generation.'),
+  prompt: z.string().describe('The text prompt in any language for video generation.'),
   photoDataUri: z.string().optional().describe('An optional photo reference as a data URI.'),
   is4K: z.boolean().optional().describe('Whether to generate in high-fidelity 4K mode.'),
 });
@@ -33,7 +33,6 @@ async function fetchAndEncodeVideo(videoMediaUrl: string): Promise<string> {
   const videoDownloadUrl = `${videoMediaUrl}&key=${process.env.GEMINI_API_KEY}`;
   
   const response = await fetch(videoDownloadUrl);
-
   if (!response.ok) {
     throw new Error(`Failed to fetch video: ${response.statusText}`);
   }
@@ -43,36 +42,27 @@ async function fetchAndEncodeVideo(videoMediaUrl: string): Promise<string> {
 }
 
 /**
- * Prompt to turn simple user descriptions into high-quality visual prompts for extended cinematic sessions.
+ * Visual Masterplan Prompt for any language input.
  */
 const optimizePromptForVideo = ai.definePrompt({
   name: 'optimizePromptForVideoVisuals',
   input: { schema: MultilingualVideoGenerationInputSchema },
   output: { 
     schema: z.object({ 
-      optimizedPrompt: z.string().describe('An optimized English prompt.') 
+      optimizedPrompt: z.string().describe('An optimized English cinematic prompt.') 
     }) 
   },
-  prompt: `You are an expert director specializing in AI cinematography.
-Your task is to take a user's prompt (Malayalam, German, or English) and expand it into a detailed visual description for a high-end AI video model.
+  prompt: `You are an expert AI Video Director.
+Take this user input (in any language) and convert it into a detailed visual masterplan for a high-end AI video model.
 
-Expansion guidelines:
-1. Describe textures, lighting (cinematic, volumetric), and atmosphere in great detail.
-2. Define camera movement (e.g., slow pan, drone sweep) suitable for an extended cinematic session.
-3. If input is in Malayalam (മലയാളം) or German (Deutsch), translate the core intent to poetic English first.
-4. Ensure the vision supports an extended, slow-paced cinematic sequence.
+Rules:
+1. Expand the prompt with textures, lighting, and camera movement.
+2. If the input is non-English, preserve the exact poetic sentiment.
+3. If an image is provided, ensure the prompt describes how the image evolves into motion.
 
 User Prompt: "{{{prompt}}}"
-{{#if photoDataUri}}The user provided a photo. The video must start from or be heavily inspired by this image.{{/if}}
-{{#if is4K}}Mode: Ultra High Fidelity 4K Cinematic mode.{{/if}}`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' }
-    ]
-  }
+{{#if photoDataUri}}Context: This is an AI Photo Editing session. The image must come to life.{{/if}}
+{{#if is4K}}Mode: Ultra-High Definition 4K.{{/if}}`,
 });
 
 const multilingualVideoGenerationFlow = ai.defineFlow(
@@ -82,7 +72,6 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     outputSchema: MultilingualVideoGenerationOutputSchema,
   },
   async (input) => {
-    // 1. Optimize the prompt using the structured object result
     const { output } = await optimizePromptForVideo(input);
     const optimizedString = output?.optimizedPrompt;
     
@@ -90,7 +79,6 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
         throw new Error('Failed to optimize prompt. Model returned no result.');
     }
 
-    // 2. Prepare content parts for Veo
     const promptParts: any[] = [{ text: optimizedString }];
     if (input.photoDataUri) {
       const mimeType = input.photoDataUri.split(';')[0].split(':')[1] || 'image/jpeg';
@@ -102,7 +90,6 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       });
     }
 
-    // 3. Generate Video using Veo with maximum allowed duration
     let { operation } = await ai.generate({
       model: googleAI.model('veo-2.0-generate-001'), 
       prompt: promptParts,
@@ -116,7 +103,6 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       throw new Error('Video generation failed to start.');
     }
 
-    // 4. Wait for completion
     while (!operation.done) {
       operation = await ai.checkOperation(operation);
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -131,7 +117,6 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       throw new Error('No video returned from the model.');
     }
 
-    // 5. Download and return as data URI
     const videoDataUri = await fetchAndEncodeVideo(videoMediaPart.media.url);
     return { videoDataUri };
   }
