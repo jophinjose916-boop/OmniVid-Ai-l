@@ -10,7 +10,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import * as wav from 'wav';
 import { googleAI } from '@genkit-ai/google-genai';
 
 const MultilingualVoiceoverInputSchema = z.object({
@@ -76,11 +75,6 @@ const multilingualVoiceoverFlow = ai.defineFlow(
 
 /**
  * Converts PCM audio data to WAV format.
- * @param pcmData The PCM audio data as a Buffer.
- * @param channels The number of audio channels (default: 1).
- * @param rate The sample rate (default: 24000 Hz).
- * @param sampleWidth The sample width in bytes (default: 2 for 16-bit).
- * @returns A Promise that resolves with the base64 encoded WAV audio string.
  */
 async function toWav(
   pcmData: Buffer,
@@ -88,6 +82,9 @@ async function toWav(
   rate = 24000,
   sampleWidth = 2
 ): Promise<string> {
+  // Use dynamic import for wav to avoid build-time resolution issues if possible
+  const wav = await import('wav');
+  
   return new Promise((resolve, reject) => {
     const writer = new wav.Writer({
       channels,

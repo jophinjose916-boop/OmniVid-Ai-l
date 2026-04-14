@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VOICES } from '@/lib/types';
+import { useUser, useFirestore, useAuth, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
+import { doc, serverTimestamp } from 'firebase/firestore';
 
 export function VideoCreator() {
   const [userPrompt, setUserPrompt] = useState('');
@@ -21,7 +23,18 @@ export function VideoCreator() {
   const [videoUrl, setVideoUrl] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
   const [selectedVoice, setSelectedVoice] = useState(VOICES[0].id);
+  
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
+  const auth = useAuth();
   const { toast } = useToast();
+
+  // Ensure user is signed in anonymously at minimum
+  useEffect(() => {
+    if (!isUserLoading && !user && auth) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [user, isUserLoading, auth]);
 
   const handleOptimize = async () => {
     if (!userPrompt.trim()) return;
@@ -39,28 +52,56 @@ export function VideoCreator() {
 
   const handleGenerate = async () => {
     const promptToUse = optimizedPrompt || userPrompt;
-    if (!promptToUse.trim()) return;
+    if (!promptToUse.trim() || !user || !db) return;
     
     setIsGenerating(true);
+    setVideoUrl('');
+    setAudioUrl('');
+
     try {
       // Step 1: Video Generation
       const videoResult = await multilingualVideoGeneration({ prompt: promptToUse });
-      setVideoUrl(videoResult.videoDataUri);
+      const finalVideoUrl = videoResult.videoDataUri;
+      setVideoUrl(finalVideoUrl);
       
-      // Step 2: Voiceover (Simulated as extra feature)
-      // Only generate voiceover if there's enough descriptive text in user prompt
-      if (userPrompt.length > 20) {
+      // Step 2: Voiceover
+      let finalAudioUrl = '';
+      if (userPrompt.length > 10) {
         try {
           const audioResult = await multilingualVoiceover({ text: userPrompt, voiceName: selectedVoice });
-          setAudioUrl(audioResult.audioDataUri);
+          finalAudioUrl = audioResult.audioDataUri;
+          setAudioUrl(finalAudioUrl);
         } catch (e) {
           console.warn("Voiceover generation failed, continuing with video only.");
         }
       }
+
+      // Step 3: Save to Firestore
+      const videoId = crypto.randomUUID();
+      const videoRef = doc(db, 'users', user.uid, 'videos', videoId);
       
-      toast({ title: "Generation Complete!", description: "Your AI video is ready." });
+      setDocumentNonBlocking(videoRef, {
+        id: videoId,
+        userId: user.uid,
+        originalPrompt: userPrompt,
+        optimizedPrompt: optimizedPrompt || userPrompt,
+        inputLanguage: 'auto', // Detected by flow
+        outputLanguage: 'en', // Default for now
+        visualStyle: 'Cinematic',
+        status: 'completed',
+        generationMode: 'Standard',
+        resolution: '720p',
+        storageUrl: finalVideoUrl, // In a real app this would be a GCS URL
+        thumbnailUrl: `https://picsum.photos/seed/${videoId}/600/400`,
+        durationSeconds: 5,
+        createdAt: new Date().toISOString(), // Simplified for now
+        isWatermarked: true,
+      }, { merge: true });
+      
+      toast({ title: "Generation Complete!", description: "Your AI video is ready and saved to your library." });
     } catch (error) {
-      toast({ variant: "destructive", title: "Generation Failed", description: "High traffic detected. Please try the Fast Pass queue." });
+      console.error(error);
+      toast({ variant: "destructive", title: "Generation Failed", description: "High traffic detected or safety violation." });
     } finally {
       setIsGenerating(false);
     }
@@ -107,9 +148,13 @@ export function VideoCreator() {
               <Sparkles className="w-3 h-3" />
               AI-OPTIMIZED PROMPT (ENGLISH)
             </div>
-            <p className="text-sm text-foreground/80 leading-relaxed italic">
-              "{optimizedPrompt}"
-            </p>
+            <div className="flex gap-2 items-start">
+              <Textarea 
+                value={optimizedPrompt}
+                onChange={(e) => setOptimizedPrompt(e.target.value)}
+                className="text-sm bg-transparent border-none p-0 focus-visible:ring-0 min-h-[40px] resize-none text-foreground/80 italic leading-relaxed"
+              />
+            </div>
           </div>
         )}
       </div>
@@ -142,7 +187,7 @@ export function VideoCreator() {
             <Button 
               className="flex-1 gradient-bg text-white h-12 text-lg font-headline font-bold hover:opacity-90 transition-opacity"
               onClick={handleGenerate}
-              disabled={isGenerating || !userPrompt}
+              disabled={isGenerating || !userPrompt || isUserLoading}
             >
               {isGenerating ? "GENERATING..." : "GENERATE VIDEO"}
             </Button>
