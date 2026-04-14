@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const landingPreview = PlaceHolderImages.find(img => img.id === 'landing-preview');
+  const appLogo = PlaceHolderImages.find(img => img.id === 'app-logo');
 
   const faqs = [
     {
@@ -145,8 +146,8 @@ export default function Home() {
       <footer className="py-16 border-t mt-auto">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-              <Video className="text-white w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+              <img src={appLogo?.imageUrl} alt="OmniVid AI Logo" className="w-full h-full object-cover" />
             </div>
             <span className="font-headline font-bold text-2xl tracking-tight">OmniVid AI</span>
           </div>

@@ -1,19 +1,22 @@
+
 "use client";
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Video, Library, Sparkles, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck } from 'lucide-react';
+import { Video, Library, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser, useAuth, useFirestore, initiateGoogleSignIn, setDocumentNonBlocking } from '@/firebase';
 import { useEffect } from 'react';
 import { doc } from 'firebase/firestore';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function Navbar() {
   const pathname = usePathname();
   const { user } = useUser();
   const auth = useAuth();
   const db = useFirestore();
+  const appLogo = PlaceHolderImages.find(img => img.id === 'app-logo');
 
   // Sync user profile to Firestore if signed in via Google
   useEffect(() => {
@@ -39,8 +42,13 @@ export function Navbar() {
       <div className="container mx-auto px-4 flex items-center justify-between">
         <div className="flex items-center gap-12">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Sparkles className="text-white w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
+              <img 
+                src={appLogo?.imageUrl} 
+                alt="OmniVid AI Logo" 
+                className="w-full h-full object-cover"
+                data-ai-hint={appLogo?.imageHint}
+              />
             </div>
             <span className="font-headline font-bold text-2xl tracking-tighter hidden sm:inline-block">
               OmniVid <span className="gradient-text">AI</span>

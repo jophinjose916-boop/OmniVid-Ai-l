@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -29,6 +30,12 @@
       "description": "Default user avatar portrait",
       "imageUrl": "https://picsum.photos/seed/user/100/100",
       "imageHint": "portrait"
+    },
+    {
+      "id": "app-logo",
+      "description": "OmniVid AI Professional Tech Logo",
+      "imageUrl": "https://picsum.photos/seed/omnivid-logo/128/128",
+      "imageHint": "tech logo"
     }
   ]
 }
