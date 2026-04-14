@@ -22,7 +22,7 @@ export function VideoCreator() {
   const [userPrompt, setUserPrompt] = useState('');
   const [optimizedPrompt, setOptimizedPrompt] = useState('');
   const [voiceScript, setVoiceScript] = useState('');
-  const [scriptLanguage, setScriptLanguage] = useState<'malayalam' | 'english'>('malayalam');
+  const [scriptLanguage, setScriptLanguage] = useState<'malayalam' | 'english' | 'german'>('malayalam');
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [is4K, setIs4K] = useState(true);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -143,7 +143,7 @@ export function VideoCreator() {
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Languages className="w-4 h-4" />
-                Prompt (മലയാളം / English)
+                Prompt (മലയാളം / EN / DE)
               </label>
               <div className="flex items-center gap-3">
                  <div className="flex items-center space-x-2">
@@ -163,7 +163,7 @@ export function VideoCreator() {
             
             <div className="relative">
               <Textarea
-                placeholder="Describe your scene... e.g., ഒരു മനോഹരമായ സൂര്യാസ്തമയം / A beautiful sunset over the mountains..."
+                placeholder="Describe your scene... e.g., ഒരു മനോഹരമായ സൂര്യാസ്തമയം / A beautiful sunset / Ein schöner Sonnenuntergang..."
                 className="min-h-[140px] bg-card/50 border-white/10 focus:ring-primary text-lg resize-none pr-32"
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
@@ -296,6 +296,14 @@ export function VideoCreator() {
                     >
                       EN
                     </Button>
+                    <Button 
+                      variant={scriptLanguage === 'german' ? 'secondary' : 'ghost'} 
+                      size="sm" 
+                      className="h-7 px-2 text-[10px] rounded-full font-bold uppercase"
+                      onClick={() => setScriptLanguage('german')}
+                    >
+                      DE
+                    </Button>
                   </div>
                 </div>
                 
@@ -354,10 +362,10 @@ export function VideoCreator() {
             <CardContent className="p-4 space-y-3">
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                 <Globe className="w-3 h-3" />
-                No-Limit 30-Min Policy
+                Language Policy
               </h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Enjoy **unlimited 30-minute generations** with no time caps. Our AI supports extended cinematic storytelling sessions in both Malayalam and English.
+                Enjoy **unlimited 30-minute generations** with no time caps. Support for Malayalam, English, and German cinematic storytelling.
               </p>
             </CardContent>
           </Card>

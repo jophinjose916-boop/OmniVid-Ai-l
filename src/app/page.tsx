@@ -17,8 +17,8 @@ export default function Home() {
       a: "Yes! OmniVid AI offers unlimited 4K video generation. We believe long-form high-fidelity creativity shouldn't be gated. You can generate continuous cinematic sequences up to 30 minutes per creation."
     },
     {
-      q: "How well does it understand Malayalam?",
-      a: "Extremely well. Our AI is specifically tuned to understand Malayalam (മലയാളം) prompts and translate the poetic nuances into world-class 4K cinematic visual descriptions optimized for long-form content."
+      q: "Which languages are supported?",
+      a: "We currently offer full cinematic support for Malayalam (മലയാളം), English, and German (Deutsch). Our AI handles translation and poetic scripting across all three languages."
     },
     {
       q: "Can I use my own photos as references for 30-minute videos?",
@@ -39,21 +39,21 @@ export default function Home() {
           <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-morphism border-primary/20 text-primary text-sm font-medium animate-in fade-in slide-in-from-top-4 duration-700">
               <Clock className="w-4 h-4 fill-primary" />
-              30-Minute Extended Cinematic Render Enabled
+              Bilingual Assistant: ML | EN | DE Enabled
             </div>
             
             <h1 className="text-5xl md:text-7xl font-headline font-bold leading-tight tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-              Unlimited <span className="gradient-text">30-Min 4K Video</span> with No Limits
+              Unlimited <span className="gradient-text">30-Min 4K Video</span> with DE/ML/EN
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-              നിങ്ങളുടെ ഭാവനയെ 30 മിനിറ്റ് സിനിമയാക്കൂ. Turn Malayalam or English text into stunning 30-minute ultra-high-definition videos. Pure long-form creativity.
+              നിങ്ങളുടെ ഭാവനയെ സിനിമയാക്കൂ. Turn Malayalam, German, or English text into stunning 30-minute ultra-high-definition videos.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
               <Link href="/dashboard">
                 <Button size="lg" className="gradient-bg text-white h-14 px-10 text-lg font-headline font-bold gap-2">
-                  Generate 30-Min 4K / തുടങ്ങാം
+                  Start Generation / തുടങ്ങാം / Starten
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
@@ -74,7 +74,7 @@ export default function Home() {
                 </div>
                 <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-white">Unlimited 30-Min Cinematic Engine</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-white">Google Assistant Tech Integrated</span>
                 </div>
               </div>
             </div>
@@ -90,8 +90,8 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto md:mx-0">
                 <Globe2 className="text-primary w-6 h-6" />
               </div>
-              <h3 className="text-xl font-headline font-bold">മലയാളം Support</h3>
-              <p className="text-muted-foreground">Prompt in Malayalam. Our AI translates the soul of your message into cinematic 4K visuals for 30-minute masterpieces.</p>
+              <h3 className="text-xl font-headline font-bold">ML / EN / DE Support</h3>
+              <p className="text-muted-foreground">Prompt in your native tongue. Our AI translates the soul of your message into cinematic 4K visuals for professional masterpieces.</p>
             </div>
             <div className="space-y-4 text-center md:text-left">
               <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto md:mx-0">
@@ -105,7 +105,7 @@ export default function Home() {
                 <Sparkles className="text-green-500 w-6 h-6" />
               </div>
               <h3 className="text-xl font-headline font-bold">AI Image Editing</h3>
-              <p className="text-muted-foreground">Upload your photos and watch them come to life in 4K. Edit your memories into 30-minute long cinematic masterpieces.</p>
+              <p className="text-muted-foreground">Upload your photos and watch them come to life in 4K. Professional AI editing for your favorite memories.</p>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-headline font-bold mb-6">Ready for 30-Minute 4K Creation?</h2>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Join thousands of creators turning Malayalam and English prompts into cinematic 30-minute reality.
+            Join thousands of creators turning Malayalam, German, and English prompts into cinematic 30-minute reality.
           </p>
           <Link href="/dashboard">
             <Button size="lg" className="gradient-bg text-white h-14 px-12 text-lg font-headline font-bold gap-2">
@@ -155,11 +155,11 @@ export default function Home() {
             </div>
             <span className="font-headline font-bold text-lg">OmniVid AI</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2026 OmniVid AI. Extended 30-Min 4K AI Video Suite. Powered by Google Veo.</p>
+          <p className="text-sm text-muted-foreground">© 2026 OmniVid AI. DE/ML/EN 30-Min 4K Suite. Powered by Google Technology.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link href="#" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-primary transition-colors">Terms</Link>
-            <Link href="#" className="hover:text-primary transition-colors">30-Min Guidelines</Link>
+            <Link href="#" className="hover:text-primary transition-colors">Guidelines</Link>
           </div>
         </div>
       </footer>

@@ -1,4 +1,3 @@
-
 export interface VideoMetadata {
   id: string;
   prompt: string;
@@ -17,8 +16,8 @@ export interface VoiceOption {
 }
 
 export const VOICES: VoiceOption[] = [
-  { id: 'Algenib', name: 'Algenib', description: 'Deep & Professional' },
-  { id: 'Achernar', name: 'Achernar', description: 'Soft & Narrative' },
-  { id: 'Castor', name: 'Castor', description: 'Energetic & Bright' },
-  { id: 'Deneb', name: 'Deneb', description: 'Calm & Friendly' },
+  { id: 'Algenib', name: 'Algenib', description: 'Deep & Professional (Multi-lingual)' },
+  { id: 'Achernar', name: 'Achernar', description: 'Soft & Narrative (Multi-lingual)' },
+  { id: 'Castor', name: 'Castor', description: 'Energetic & Bright (Multi-lingual)' },
+  { id: 'Deneb', name: 'Deneb', description: 'Calm & Friendly (Multi-lingual)' },
 ];
