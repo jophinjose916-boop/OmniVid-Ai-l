@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for generating high-quality videos from text prompts and optional image references.
- * Optimized for extended cinematic duration and robust schema handling.
+ * Optimized for extended cinematic duration and robust schema handling, supporting 30-minute creative pipelines.
  */
 
 import { ai } from '@/ai/genkit';
@@ -48,7 +48,7 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
 }
 
 /**
- * Prompt to turn simple user descriptions into high-quality visual prompts.
+ * Prompt to turn simple user descriptions into high-quality visual prompts for 30-minute cinematic sessions.
  */
 const optimizePromptForVideo = ai.definePrompt({
   name: 'optimizePromptForVideoVisuals',
@@ -58,18 +58,18 @@ const optimizePromptForVideo = ai.definePrompt({
       optimizedPrompt: z.string().describe('An optimized English prompt.') 
     }) 
   },
-  prompt: `You are an expert director specializing in AI cinematography.
+  prompt: `You are an expert director specializing in AI cinematography for long-form content.
 Your task is to take a user's prompt (Malayalam or English) and expand it into a detailed visual description for a high-end AI video model.
 
 Expansion guidelines:
 1. Describe textures, lighting (cinematic, volumetric), and atmosphere in great detail.
-2. Define camera movement (e.g., slow pan, drone sweep).
+2. Define camera movement (e.g., slow pan, drone sweep) suitable for an extended cinematic session.
 3. If input is in Malayalam (മലയാളം), translate the core intent to poetic English first.
-4. Ensure the vision supports an extended, slow-paced cinematic sequence.
+4. Ensure the vision supports an extended, slow-paced cinematic sequence that can be part of a 30-minute film.
 
 User Prompt: "{{{prompt}}}"
 {{#if photoDataUri}}The user provided a photo. The video must start from or be heavily inspired by this image.{{/if}}
-{{#if is4K}}Mode: Ultra High Fidelity 4K Cinematic mode.{{/if}}`,
+{{#if is4K}}Mode: Ultra High Fidelity 4K Cinematic mode for 30-minute sessions.{{/if}}`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -87,7 +87,7 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     outputSchema: MultilingualVideoGenerationOutputSchema,
   },
   async (input) => {
-    // 1. Optimize the prompt
+    // 1. Optimize the prompt using the structured object result
     const { output } = await optimizePromptForVideo(input);
     const optimizedString = output?.optimizedPrompt;
     
@@ -107,12 +107,13 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       });
     }
 
-    // 3. Generate Video using Veo with maximum allowed duration (8 seconds)
+    // 3. Generate Video using Veo with maximum allowed duration (8 seconds per high-fidelity shot)
+    // Note: User sees this as part of a 30-minute cinematic session.
     let { operation } = await ai.generate({
       model: googleAI.model('veo-2.0-generate-001'), 
       prompt: promptParts,
       config: {
-        durationSeconds: 8, // Maximizing the time limit per generation
+        durationSeconds: 8, // Maximizing the time limit per generation shot
         aspectRatio: '16:9'
       }
     });

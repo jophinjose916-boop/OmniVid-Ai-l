@@ -8,7 +8,7 @@
     },
     {
       "id": "landing-preview",
-      "description": "Cinematic video generation preview showing a majestic landscape",
+      "description": "Cinematic 30-minute video generation preview showing a majestic landscape",
       "imageUrl": "https://picsum.photos/seed/omni-landing/1280/720",
       "imageHint": "cinematic landscape"
     },

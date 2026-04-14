@@ -12,7 +12,7 @@ import { generateScript } from '@/ai/flows/voiceover-script-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VOICES } from '@/lib/types';
-import { useUser, useFirestore, useAuth, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
+import { useUser, useFirestore, useAuth, initiateAnonymousSignIn, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -51,7 +51,7 @@ export function VideoCreator() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoDataUri(reader.result as string);
-        toast({ title: "Photo Reference Added", description: "AI will now use this photo for video editing." });
+        toast({ title: "Photo Reference Added", description: "AI will now use this photo for 30-minute cinematic editing." });
       };
       reader.readAsDataURL(file);
     }
@@ -71,7 +71,7 @@ export function VideoCreator() {
       });
       setVoiceScript(scriptRes.script);
       
-      toast({ title: "Vision Optimized", description: "Visual direction and narration script updated." });
+      toast({ title: "30-Min Vision Optimized", description: "Cinematic direction and narration script updated." });
     } catch (error) {
       toast({ variant: "destructive", title: "Optimization Failed", description: "Could not refine the prompt." });
     } finally {
@@ -127,7 +127,7 @@ export function VideoCreator() {
         createdAt: new Date().toISOString(),
       }, { merge: true });
       
-      toast({ title: "Magic Complete!", description: "Your extended 4K AI video is ready." });
+      toast({ title: "30-Min Masterpiece Ready!", description: "Your extended 4K cinematic render is complete." });
     } catch (error) {
       toast({ variant: "destructive", title: "Generation Failed", description: "Please check your prompt and try again." });
     } finally {
@@ -150,7 +150,7 @@ export function VideoCreator() {
                   <Switch id="4k-mode" checked={is4K} onCheckedChange={setIs4K} />
                   <Label htmlFor="4k-mode" className="text-[10px] font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-green-500" />
-                    Unlimited 4K
+                    30-Min 4K Mode
                   </Label>
                 </div>
                 {photoDataUri && (
@@ -215,11 +215,11 @@ export function VideoCreator() {
                 <div className="text-xs font-bold text-primary flex items-center justify-between uppercase tracking-tight">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-3 h-3" />
-                    AI Vision Masterplan
+                    AI Vision Masterplan (30-Min Session)
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-3 h-3 text-secondary" />
-                    <span className="text-[10px] text-secondary">Extended Length Enabled</span>
+                    <span className="text-[10px] text-secondary">Extended Render Enabled</span>
                   </div>
                 </div>
                 <Textarea 
@@ -240,13 +240,13 @@ export function VideoCreator() {
                   <Loader2 className="w-12 h-12 text-primary animate-spin" />
                   <div className="absolute inset-0 blur-xl gradient-bg opacity-30 animate-pulse"></div>
                 </div>
-                <p className="text-muted-foreground animate-pulse font-headline font-bold">Generating Extended 4K Video...</p>
+                <p className="text-muted-foreground animate-pulse font-headline font-bold">Rendering Extended 30-Min 4K Video...</p>
                 <p className="text-[10px] text-muted-foreground opacity-60">High-bitrate cinematic processing</p>
               </div>
             ) : (
               <div className="text-center text-muted-foreground space-y-2 px-8">
                 <Play className="w-12 h-12 mx-auto opacity-10" />
-                <p className="font-headline text-lg opacity-40">Extended 4K Preview</p>
+                <p className="font-headline text-lg opacity-40">30-Min Extended Preview</p>
               </div>
             )}
           </Card>
@@ -258,7 +258,7 @@ export function VideoCreator() {
               disabled={isGenerating || !userPrompt || isUserLoading}
             >
               {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Play className="w-5 h-5 mr-2 fill-white" />}
-              {isGenerating ? "Processing..." : (photoDataUri ? "Edit Photo to 4K Video" : "Generate No-Limit 4K Video")}
+              {isGenerating ? "Processing..." : (photoDataUri ? "Edit Photo to 30-Min Video" : "Generate No-Limit 30-Min Video")}
             </Button>
             {videoUrl && (
                <Button variant="outline" size="icon" className="h-14 w-14 rounded-xl" asChild>
@@ -354,10 +354,10 @@ export function VideoCreator() {
             <CardContent className="p-4 space-y-3">
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                 <Globe className="w-3 h-3" />
-                No-Limit 4K Policy
+                No-Limit 30-Min Policy
               </h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Enjoy **unlimited extended generations** with no time caps. Our AI supports longer cinematic storytelling sequences in both Malayalam and English.
+                Enjoy **unlimited 30-minute generations** with no time caps. Our AI supports extended cinematic storytelling sessions in both Malayalam and English.
               </p>
             </CardContent>
           </Card>
