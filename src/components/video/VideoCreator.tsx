@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck } from 'lucide-react';
+import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock } from 'lucide-react';
 import { optimizePrompt } from '@/ai/flows/prompt-optimization';
 import { multilingualVideoGeneration } from '@/ai/flows/multilingual-video-generation';
 import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
@@ -127,7 +127,7 @@ export function VideoCreator() {
         createdAt: new Date().toISOString(),
       }, { merge: true });
       
-      toast({ title: "Magic Complete!", description: "Your 4K AI video is ready for viewing." });
+      toast({ title: "Magic Complete!", description: "Your extended 4K AI video is ready." });
     } catch (error) {
       toast({ variant: "destructive", title: "Generation Failed", description: "Please check your prompt and try again." });
     } finally {
@@ -217,7 +217,10 @@ export function VideoCreator() {
                     <Sparkles className="w-3 h-3" />
                     AI Vision Masterplan
                   </div>
-                  {is4K && <span className="text-[10px] text-green-500">4K Upscaling Enabled</span>}
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3 h-3 text-secondary" />
+                    <span className="text-[10px] text-secondary">Extended Length Enabled</span>
+                  </div>
                 </div>
                 <Textarea 
                   value={optimizedPrompt}
@@ -237,12 +240,13 @@ export function VideoCreator() {
                   <Loader2 className="w-12 h-12 text-primary animate-spin" />
                   <div className="absolute inset-0 blur-xl gradient-bg opacity-30 animate-pulse"></div>
                 </div>
-                <p className="text-muted-foreground animate-pulse font-headline font-bold">Creating 4K Video...</p>
+                <p className="text-muted-foreground animate-pulse font-headline font-bold">Generating Extended 4K Video...</p>
+                <p className="text-[10px] text-muted-foreground opacity-60">High-bitrate cinematic processing</p>
               </div>
             ) : (
               <div className="text-center text-muted-foreground space-y-2 px-8">
                 <Play className="w-12 h-12 mx-auto opacity-10" />
-                <p className="font-headline text-lg opacity-40">4K Video Preview</p>
+                <p className="font-headline text-lg opacity-40">Extended 4K Preview</p>
               </div>
             )}
           </Card>
@@ -254,11 +258,11 @@ export function VideoCreator() {
               disabled={isGenerating || !userPrompt || isUserLoading}
             >
               {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Play className="w-5 h-5 mr-2 fill-white" />}
-              {isGenerating ? "Processing..." : (photoDataUri ? "Edit Photo to 4K Video" : "Generate 4K Video")}
+              {isGenerating ? "Processing..." : (photoDataUri ? "Edit Photo to 4K Video" : "Generate No-Limit 4K Video")}
             </Button>
             {videoUrl && (
                <Button variant="outline" size="icon" className="h-14 w-14 rounded-xl" asChild>
-                <a href={videoUrl} download="omni-vid-4k.mp4">
+                <a href={videoUrl} download="omni-vid-extended-4k.mp4">
                   <Download className="w-6 h-6" />
                 </a>
               </Button>
@@ -350,10 +354,10 @@ export function VideoCreator() {
             <CardContent className="p-4 space-y-3">
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                 <Globe className="w-3 h-3" />
-                Unlimited 4K Policy
+                No-Limit 4K Policy
               </h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Enjoy **unlimited 4K generations** in both Malayalam and English. Our standard mode includes high-bitrate encoding for cinematic quality.
+                Enjoy **unlimited extended generations** with no time caps. Our AI supports longer cinematic storytelling sequences in both Malayalam and English.
               </p>
             </CardContent>
           </Card>

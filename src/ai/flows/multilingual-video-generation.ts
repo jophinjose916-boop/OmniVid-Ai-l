@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for generating high-quality videos from text prompts and optional image references.
- * Fixed schema validation errors by properly handling structured prompt optimization output.
+ * Optimized for extended cinematic duration and robust schema handling.
  */
 
 import { ai } from '@/ai/genkit';
@@ -33,7 +33,6 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
     throw new Error('Video media part missing URL.');
   }
 
-  // Use dynamic import for node-fetch to avoid build-time resolution issues
   const fetchModule = await import('node-fetch');
   const fetch = (fetchModule.default || fetchModule) as any;
   const videoDownloadUrl = `${videoMediaPart.media.url}&key=${process.env.GEMINI_API_KEY}`;
@@ -50,7 +49,6 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
 
 /**
  * Prompt to turn simple user descriptions into high-quality visual prompts.
- * Uses a structured object output to be more robust.
  */
 const optimizePromptForVideo = ai.definePrompt({
   name: 'optimizePromptForVideoVisuals',
@@ -67,6 +65,7 @@ Expansion guidelines:
 1. Describe textures, lighting (cinematic, volumetric), and atmosphere in great detail.
 2. Define camera movement (e.g., slow pan, drone sweep).
 3. If input is in Malayalam (മലയാളം), translate the core intent to poetic English first.
+4. Ensure the vision supports an extended, slow-paced cinematic sequence.
 
 User Prompt: "{{{prompt}}}"
 {{#if photoDataUri}}The user provided a photo. The video must start from or be heavily inspired by this image.{{/if}}
@@ -99,20 +98,21 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     // 2. Prepare content parts for Veo
     const promptParts: any[] = [{ text: optimizedString }];
     if (input.photoDataUri) {
+      const mimeType = input.photoDataUri.split(';')[0].split(':')[1] || 'image/jpeg';
       promptParts.push({
         media: {
           url: input.photoDataUri,
-          contentType: 'image/jpeg'
+          contentType: mimeType
         }
       });
     }
 
-    // 3. Generate Video using Veo
+    // 3. Generate Video using Veo with maximum allowed duration (8 seconds)
     let { operation } = await ai.generate({
       model: googleAI.model('veo-2.0-generate-001'), 
       prompt: promptParts,
       config: {
-        durationSeconds: 5,
+        durationSeconds: 8, // Maximizing the time limit per generation
         aspectRatio: '16:9'
       }
     });
