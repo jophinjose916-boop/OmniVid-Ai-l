@@ -30,6 +30,7 @@ export function VideoCreator() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Automatically sign in anonymously if not authenticated to allow immediate creation
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
@@ -41,7 +42,7 @@ export function VideoCreator() {
     try {
       const result = await optimizePrompt({ userPrompt });
       setOptimizedPrompt(result.optimizedPrompt);
-      toast({ title: "Prompt Optimized", description: "Your prompt has been enhanced with cinematic details." });
+      toast({ title: "Vision Optimized", description: "Your prompt has been enhanced with cinematic details." });
     } catch (error) {
       toast({ variant: "destructive", title: "Optimization Failed", description: "Please try again." });
     } finally {
@@ -58,10 +59,12 @@ export function VideoCreator() {
     setAudioUrl('');
 
     try {
+      // Step 1: Generate Video
       const videoResult = await multilingualVideoGeneration({ prompt: promptToUse });
       const finalVideoUrl = videoResult.videoDataUri;
       setVideoUrl(finalVideoUrl);
       
+      // Step 2: Parallel Voiceover Generation (if prompt is significant)
       let finalAudioUrl = '';
       if (userPrompt.length > 5) {
         try {
@@ -69,10 +72,11 @@ export function VideoCreator() {
           finalAudioUrl = audioResult.audioDataUri;
           setAudioUrl(finalAudioUrl);
         } catch (e) {
-          console.warn("Voiceover failed", e);
+          console.warn("Voiceover failed, continuing with video only", e);
         }
       }
 
+      // Step 3: Save to Library
       const videoId = crypto.randomUUID();
       const videoRef = doc(db, 'users', user.uid, 'videos', videoId);
       
@@ -97,7 +101,7 @@ export function VideoCreator() {
       toast({ title: "Magic Complete!", description: "Your video is ready and saved to your library." });
     } catch (error) {
       console.error(error);
-      toast({ variant: "destructive", title: "Generation Failed", description: "High load detected. Please try again shortly." });
+      toast({ variant: "destructive", title: "Generation Failed", description: "The imagination engine is under high load. Please try again." });
     } finally {
       setIsGenerating(false);
     }
@@ -113,7 +117,7 @@ export function VideoCreator() {
           </label>
           <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center gap-1">
             <Zap className="w-3 h-3 fill-primary" />
-            Unlimited Mode Active
+            Standard Mode Unlimited
           </div>
         </div>
         
@@ -185,9 +189,13 @@ export function VideoCreator() {
             >
               {isGenerating ? "CREATING..." : "GENERATE VIDEO"}
             </Button>
-            <Button variant="outline" size="icon" className="h-12 w-12" disabled={!videoUrl}>
-              <Download className="w-5 h-5" />
-            </Button>
+            {videoUrl && (
+               <Button variant="outline" size="icon" className="h-12 w-12" asChild>
+                <a href={videoUrl} download="omni-vid.mp4">
+                  <Download className="w-5 h-5" />
+                </a>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -204,8 +212,8 @@ export function VideoCreator() {
               <SelectContent>
                 {VOICES.map(voice => (
                   <SelectItem key={voice.id} value={voice.id}>
-                    <div className="flex flex-col">
-                      <span>{voice.name}</span>
+                    <div className="flex flex-col text-left">
+                      <span className="font-medium">{voice.name}</span>
                       <span className="text-[10px] opacity-60">{voice.description}</span>
                     </div>
                   </SelectItem>
@@ -225,7 +233,7 @@ export function VideoCreator() {
                 <div className="bg-primary w-full h-full"></div>
               </div>
               <p className="text-[10px] text-muted-foreground leading-tight">
-                Standard generations are free. Use the ad-supported fast pass for larger resolutions.
+                Standard 720p generations are free. Your creations are stored privately in your encrypted library.
               </p>
             </CardContent>
           </Card>

@@ -73,7 +73,7 @@ const multilingualVoiceoverFlow = ai.defineFlow(
 );
 
 /**
- * Converts PCM audio data to WAV format.
+ * Converts PCM audio data to WAV format using dynamic import for the 'wav' module.
  */
 async function toWav(
   pcmData: Buffer,
@@ -81,10 +81,11 @@ async function toWav(
   rate = 24000,
   sampleWidth = 2
 ): Promise<string> {
+  // Dynamic import to handle CommonJS module in Next.js server environment
   const wav = await import('wav');
   
   return new Promise((resolve, reject) => {
-    const writer = new wav.Writer({
+    const writer = new wav.default.Writer({
       channels,
       sampleRate: rate,
       bitDepth: sampleWidth * 8,
