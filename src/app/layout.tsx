@@ -1,12 +1,11 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
 import {FirebaseClientProvider} from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'OmniVid AI | Unlimited Multilingual Video Generator',
-  description: 'Generate high-quality videos from text in over 100 languages with OmniVid AI.',
+  title: 'OmniVid AI | Malayalam & English Video Generator',
+  description: 'Generate high-quality videos from Malayalam (മലയാളം) and English text with OmniVid AI.',
 };
 
 export default function RootLayout({

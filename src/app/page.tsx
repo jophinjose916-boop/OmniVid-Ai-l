@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Globe2, ShieldCheck, Zap, ArrowRight, Video, Play } from 'lucide-react';
@@ -20,22 +19,21 @@ export default function Home() {
           <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-morphism border-primary/20 text-primary text-sm font-medium animate-in fade-in slide-in-from-top-4 duration-700">
               <Sparkles className="w-4 h-4 fill-primary" />
-              Next-Gen Creative Suite
+              മലയാളം & English Creative Suite
             </div>
             
             <h1 className="text-5xl md:text-7xl font-headline font-bold leading-tight tracking-tight animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-              Unlimited AI Video for <span className="gradient-text">Everyone</span>
+              Cinematic AI Video in <span className="gradient-text">Malayalam & English</span>
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-              Create cinematic videos from text in 100+ languages. 
-              No credits, no limits, just pure imagination.
+              നിങ്ങളുടെ ഭാവനയെ സിനിമയാക്കൂ. Create high-quality videos from text prompts in Malayalam or English. No limits, no credits.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
               <Link href="/dashboard">
                 <Button size="lg" className="gradient-bg text-white h-14 px-10 text-lg font-headline font-bold gap-2">
-                  Start Creating Free
+                  Start Creating Free / തുടങ്ങാം
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
@@ -68,22 +66,22 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto md:mx-0">
                 <Globe2 className="text-primary w-6 h-6" />
               </div>
-              <h3 className="text-xl font-headline font-bold">Native Polyglot</h3>
-              <p className="text-muted-foreground">Type prompts in your native language. Our AI translates and optimizes for cinematic excellence.</p>
+              <h3 className="text-xl font-headline font-bold">മലയാളം Support</h3>
+              <p className="text-muted-foreground">Type prompts in Malayalam. Our AI understands and optimizes them for world-class cinematic video generation.</p>
             </div>
             <div className="space-y-4 text-center md:text-left">
               <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto md:mx-0">
                 <Zap className="text-secondary w-6 h-6" />
               </div>
               <h3 className="text-xl font-headline font-bold">Standard Unlimited</h3>
-              <p className="text-muted-foreground">Standard 720p generation is free forever. No complex credit systems or hidden costs.</p>
+              <p className="text-muted-foreground">Unlimited 720p generation for everyone. No credit systems or hidden costs to slow down your creativity.</p>
             </div>
             <div className="space-y-4 text-center md:text-left">
               <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mx-auto md:mx-0">
                 <ShieldCheck className="text-green-500 w-6 h-6" />
               </div>
-              <h3 className="text-xl font-headline font-bold">Privacy First</h3>
-              <p className="text-muted-foreground">Secure Google one-tap login. Your creations are stored privately in your personal encrypted cloud.</p>
+              <h3 className="text-xl font-headline font-bold">Secure Library</h3>
+              <p className="text-muted-foreground">All your Malayalam and English creations are stored privately in your personal Google-backed cloud library.</p>
             </div>
           </div>
         </div>
@@ -98,7 +96,7 @@ export default function Home() {
             </div>
             <span className="font-headline font-bold text-lg">OmniVid AI</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2026 OmniVid AI. Powered by Google Veo & Gemini.</p>
+          <p className="text-sm text-muted-foreground">© 2026 OmniVid AI. മലയാളം & English AI Video. Powered by Google Veo & Gemini.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link href="#" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-primary transition-colors">Terms</Link>

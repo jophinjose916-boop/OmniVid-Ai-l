@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Wand2, Play, Download, Share2, Languages, Volume2, Loader2, Zap } from 'lucide-react';
+import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap } from 'lucide-react';
 import { optimizePrompt } from '@/ai/flows/prompt-optimization';
 import { multilingualVideoGeneration } from '@/ai/flows/multilingual-video-generation';
 import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
@@ -30,7 +29,6 @@ export function VideoCreator() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Automatically sign in anonymously if not authenticated to allow immediate creation
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
@@ -42,7 +40,7 @@ export function VideoCreator() {
     try {
       const result = await optimizePrompt({ userPrompt });
       setOptimizedPrompt(result.optimizedPrompt);
-      toast({ title: "Vision Optimized", description: "Your prompt has been enhanced with cinematic details." });
+      toast({ title: "Vision Optimized / ദൃശ്യം മെച്ചപ്പെടുത്തി", description: "Your Malayalam/English prompt has been enhanced." });
     } catch (error) {
       toast({ variant: "destructive", title: "Optimization Failed", description: "Please try again." });
     } finally {
@@ -59,12 +57,10 @@ export function VideoCreator() {
     setAudioUrl('');
 
     try {
-      // Step 1: Generate Video
       const videoResult = await multilingualVideoGeneration({ prompt: promptToUse });
       const finalVideoUrl = videoResult.videoDataUri;
       setVideoUrl(finalVideoUrl);
       
-      // Step 2: Parallel Voiceover Generation (if prompt is significant)
       let finalAudioUrl = '';
       if (userPrompt.length > 5) {
         try {
@@ -72,11 +68,10 @@ export function VideoCreator() {
           finalAudioUrl = audioResult.audioDataUri;
           setAudioUrl(finalAudioUrl);
         } catch (e) {
-          console.warn("Voiceover failed, continuing with video only", e);
+          console.warn("Voiceover failed", e);
         }
       }
 
-      // Step 3: Save to Library
       const videoId = crypto.randomUUID();
       const videoRef = doc(db, 'users', user.uid, 'videos', videoId);
       
@@ -98,10 +93,10 @@ export function VideoCreator() {
         isWatermarked: true,
       }, { merge: true });
       
-      toast({ title: "Magic Complete!", description: "Your video is ready and saved to your library." });
+      toast({ title: "Magic Complete! / സമാപിച്ചു!", description: "Your video is ready in your library." });
     } catch (error) {
       console.error(error);
-      toast({ variant: "destructive", title: "Generation Failed", description: "The imagination engine is under high load. Please try again." });
+      toast({ variant: "destructive", title: "Generation Failed", description: "The engine is busy. Please try again." });
     } finally {
       setIsGenerating(false);
     }
@@ -113,17 +108,17 @@ export function VideoCreator() {
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Languages className="w-4 h-4" />
-            Describe your vision in any language
+            Describe in Malayalam or English (മലയാളം അല്ലെങ്കിൽ ഇംഗ്ലീഷ്)
           </label>
           <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center gap-1">
             <Zap className="w-3 h-3 fill-primary" />
-            Standard Mode Unlimited
+            Unlimited Mode
           </div>
         </div>
         
         <div className="relative">
           <Textarea
-            placeholder="e.g., A majestic dragon soaring over a mystical forest at dawn..."
+            placeholder="e.g., ഒരു പുഴയുടെ തീരത്ത് സൂര്യോദയം... / A sunrise by a river..."
             className="min-h-[120px] bg-card/50 border-white/10 focus:ring-primary text-lg resize-none pr-32"
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
@@ -146,7 +141,7 @@ export function VideoCreator() {
           <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2 animate-in zoom-in-95 duration-300">
             <div className="text-xs font-bold text-primary flex items-center gap-2">
               <Sparkles className="w-3 h-3" />
-              ENHANCED VISION (EDITABLE)
+              ENHANCED VISION (ഇംഗ്ലീഷിൽ)
             </div>
             <Textarea 
               value={optimizedPrompt}
@@ -171,7 +166,7 @@ export function VideoCreator() {
                   <Loader2 className="w-12 h-12 text-primary animate-spin" />
                   <div className="absolute inset-0 blur-xl gradient-bg opacity-30 animate-pulse-subtle"></div>
                 </div>
-                <p className="text-muted-foreground animate-pulse">Rendering your imagination...</p>
+                <p className="text-muted-foreground animate-pulse">വീഡിയോ തയ്യാറാകുന്നു...</p>
               </div>
             ) : (
               <div className="text-center text-muted-foreground space-y-2 px-8">
@@ -187,7 +182,7 @@ export function VideoCreator() {
               onClick={handleGenerate}
               disabled={isGenerating || !userPrompt || isUserLoading}
             >
-              {isGenerating ? "CREATING..." : "GENERATE VIDEO"}
+              {isGenerating ? "CREATING..." : "GENERATE VIDEO / വീഡിയോ ഉണ്ടാക്കാം"}
             </Button>
             {videoUrl && (
                <Button variant="outline" size="icon" className="h-12 w-12" asChild>
@@ -233,7 +228,7 @@ export function VideoCreator() {
                 <div className="bg-primary w-full h-full"></div>
               </div>
               <p className="text-[10px] text-muted-foreground leading-tight">
-                Standard 720p generations are free. Your creations are stored privately in your encrypted library.
+                മലയാളം വീഡിയോകൾ ഇപ്പോൾ ഫ്രീ ആയി നിർമ്മിക്കാം. Standard 720p generations are free.
               </p>
             </CardContent>
           </Card>

@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview This file defines a Genkit flow for optimizing user prompts into
- * AI-friendly English prompts suitable for video generation.
+ * AI-friendly English prompts suitable for video generation, with a focus on Malayalam and English.
  *
  * - optimizePrompt - A function that handles the prompt optimization process.
  * - PromptOptimizationInput - The input type for the optimizePrompt function.
@@ -15,7 +15,7 @@ const PromptOptimizationInputSchema = z.object({
   userPrompt: z
     .string()
     .describe(
-      'The user-provided prompt, which may be in any language, to be optimized for AI video generation.'
+      'The user-provided prompt, primarily in Malayalam or English, to be optimized for AI video generation.'
     ),
 });
 export type PromptOptimizationInput = z.infer<
@@ -41,11 +41,13 @@ const prompt = ai.definePrompt({
   name: 'optimizePromptForVideo',
   input: {schema: PromptOptimizationInputSchema},
   output: {schema: PromptOptimizationOutputSchema},
-  prompt: `You are an expert prompt engineer for AI video generation models. Your task is to take a user's raw prompt, which might be in any language, and transform it into a highly descriptive, AI-friendly English prompt.
+  prompt: `You are an expert prompt engineer for AI video generation models, specializing in translating and expanding prompts from Malayalam and English into high-quality, cinematic English video prompts.
 
-The optimized prompt should be clear, concise, and contain specific details that would lead to a high-quality, visually rich video generation. Focus on visual elements, setting, mood, time of day, weather, and any specific subjects or actions.
-
-If the input prompt is not in English, first translate it accurately, then proceed with optimization. Ensure the final output is in English and ready for a text-to-video AI model.
+Your task is to:
+1. If the input is in Malayalam (മലയാളം), accurately translate the core concept to English.
+2. Expand the prompt with specific visual details: camera angles, lighting (e.g., golden hour, cinematic shadows), textures, and atmospheric effects.
+3. Ensure the tone is evocative and clear.
+4. Keep the final output in English, as it's the native language for the video generation model.
 
 User Prompt: {{{userPrompt}}}`,
 });
