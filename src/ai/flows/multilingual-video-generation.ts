@@ -7,7 +7,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import { MediaPart } from 'genkit';
 
 const MultilingualVideoGenerationInputSchema = z.object({
   prompt: z.string().describe('The text prompt for video generation.'),
@@ -28,14 +27,10 @@ export type MultilingualVideoGenerationOutput = z.infer<typeof MultilingualVideo
 /**
  * Helper to download a video from a URL and encode it as a data URI.
  */
-async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
-  if (!videoMediaPart.media || !videoMediaPart.media.url) {
-    throw new Error('Video media part missing URL.');
-  }
-
+async function fetchAndEncodeVideo(videoMediaUrl: string): Promise<string> {
   const fetchModule = await import('node-fetch');
   const fetch = (fetchModule.default || fetchModule) as any;
-  const videoDownloadUrl = `${videoMediaPart.media.url}&key=${process.env.GEMINI_API_KEY}`;
+  const videoDownloadUrl = `${videoMediaUrl}&key=${process.env.GEMINI_API_KEY}`;
   
   const response = await fetch(videoDownloadUrl);
 
@@ -107,8 +102,7 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       });
     }
 
-    // 3. Generate Video using Veo with maximum allowed duration (8 seconds per high-fidelity shot)
-    // Note: User sees this as part of a 30-minute cinematic session.
+    // 3. Generate Video using Veo with maximum allowed duration
     let { operation } = await ai.generate({
       model: googleAI.model('veo-2.0-generate-001'), 
       prompt: promptParts,
@@ -133,12 +127,12 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     }
 
     const videoMediaPart = operation.output?.message?.content.find((p) => !!p.media);
-    if (!videoMediaPart) {
+    if (!videoMediaPart || !videoMediaPart.media?.url) {
       throw new Error('No video returned from the model.');
     }
 
     // 5. Download and return as data URI
-    const videoDataUri = await fetchAndEncodeVideo(videoMediaPart);
+    const videoDataUri = await fetchAndEncodeVideo(videoMediaPart.media.url);
     return { videoDataUri };
   }
 );
