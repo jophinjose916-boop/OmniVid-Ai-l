@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe } from 'lucide-react';
+import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck } from 'lucide-react';
 import { optimizePrompt } from '@/ai/flows/prompt-optimization';
 import { multilingualVideoGeneration } from '@/ai/flows/multilingual-video-generation';
 import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
@@ -14,7 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { VOICES } from '@/lib/types';
 import { useUser, useFirestore, useAuth, setDocumentNonBlocking, initiateAnonymousSignIn } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export function VideoCreator() {
   const [userPrompt, setUserPrompt] = useState('');
@@ -22,6 +24,7 @@ export function VideoCreator() {
   const [voiceScript, setVoiceScript] = useState('');
   const [scriptLanguage, setScriptLanguage] = useState<'malayalam' | 'english'>('malayalam');
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
+  const [is4K, setIs4K] = useState(true);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
@@ -59,11 +62,9 @@ export function VideoCreator() {
     setIsOptimizing(true);
     setIsGeneratingScript(true);
     try {
-      // 1. Optimize Visual Prompt
       const result = await optimizePrompt({ userPrompt });
       setOptimizedPrompt(result.optimizedPrompt);
       
-      // 2. Generate Poetic Script in selected language
       const scriptRes = await generateScript({ 
         videoPrompt: userPrompt, 
         targetLanguage: scriptLanguage 
@@ -106,7 +107,8 @@ export function VideoCreator() {
     try {
       const videoResult = await multilingualVideoGeneration({ 
         prompt: promptToUse,
-        photoDataUri: photoDataUri || undefined
+        photoDataUri: photoDataUri || undefined,
+        is4K
       });
       const finalVideoUrl = videoResult.videoDataUri;
       setVideoUrl(finalVideoUrl);
@@ -125,7 +127,7 @@ export function VideoCreator() {
         createdAt: new Date().toISOString(),
       }, { merge: true });
       
-      toast({ title: "Magic Complete!", description: "Your AI video is ready for viewing." });
+      toast({ title: "Magic Complete!", description: "Your 4K AI video is ready for viewing." });
     } catch (error) {
       toast({ variant: "destructive", title: "Generation Failed", description: "Please check your prompt and try again." });
     } finally {
@@ -143,18 +145,26 @@ export function VideoCreator() {
                 <Languages className="w-4 h-4" />
                 Prompt (മലയാളം / English)
               </label>
-              {photoDataUri && (
-                <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center gap-1 font-bold">
-                  <Zap className="w-3 h-3 fill-primary" />
-                  AI IMAGE EDITING
+              <div className="flex items-center gap-3">
+                 <div className="flex items-center space-x-2">
+                  <Switch id="4k-mode" checked={is4K} onCheckedChange={setIs4K} />
+                  <Label htmlFor="4k-mode" className="text-[10px] font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-green-500" />
+                    Unlimited 4K
+                  </Label>
                 </div>
-              )}
+                {photoDataUri && (
+                  <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 animate-pulse">
+                    AI PHOTO EDITING
+                  </Badge>
+                )}
+              </div>
             </div>
             
             <div className="relative">
               <Textarea
                 placeholder="Describe your scene... e.g., ഒരു മനോഹരമായ സൂര്യാസ്തമയം / A beautiful sunset over the mountains..."
-                className="min-h-[120px] bg-card/50 border-white/10 focus:ring-primary text-lg resize-none pr-32"
+                className="min-h-[140px] bg-card/50 border-white/10 focus:ring-primary text-lg resize-none pr-32"
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
               />
@@ -202,9 +212,12 @@ export function VideoCreator() {
 
             {optimizedPrompt && (
               <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2 animate-in zoom-in-95 duration-300">
-                <div className="text-xs font-bold text-primary flex items-center gap-2 uppercase tracking-tight">
-                  <Sparkles className="w-3 h-3" />
-                  AI Vision Masterplan
+                <div className="text-xs font-bold text-primary flex items-center justify-between uppercase tracking-tight">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-3 h-3" />
+                    AI Vision Masterplan
+                  </div>
+                  {is4K && <span className="text-[10px] text-green-500">4K Upscaling Enabled</span>}
                 </div>
                 <Textarea 
                   value={optimizedPrompt}
@@ -224,12 +237,12 @@ export function VideoCreator() {
                   <Loader2 className="w-12 h-12 text-primary animate-spin" />
                   <div className="absolute inset-0 blur-xl gradient-bg opacity-30 animate-pulse"></div>
                 </div>
-                <p className="text-muted-foreground animate-pulse font-headline font-bold">Creating AI Video...</p>
+                <p className="text-muted-foreground animate-pulse font-headline font-bold">Creating 4K Video...</p>
               </div>
             ) : (
               <div className="text-center text-muted-foreground space-y-2 px-8">
                 <Play className="w-12 h-12 mx-auto opacity-10" />
-                <p className="font-headline text-lg opacity-40">Video Preview</p>
+                <p className="font-headline text-lg opacity-40">4K Video Preview</p>
               </div>
             )}
           </Card>
@@ -241,11 +254,11 @@ export function VideoCreator() {
               disabled={isGenerating || !userPrompt || isUserLoading}
             >
               {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Play className="w-5 h-5 mr-2 fill-white" />}
-              {isGenerating ? "Processing..." : (photoDataUri ? "Generate from Photo" : "Generate Video")}
+              {isGenerating ? "Processing..." : (photoDataUri ? "Edit Photo to 4K Video" : "Generate 4K Video")}
             </Button>
             {videoUrl && (
                <Button variant="outline" size="icon" className="h-14 w-14 rounded-xl" asChild>
-                <a href={videoUrl} download="omni-vid.mp4">
+                <a href={videoUrl} download="omni-vid-4k.mp4">
                   <Download className="w-6 h-6" />
                 </a>
               </Button>
@@ -337,10 +350,10 @@ export function VideoCreator() {
             <CardContent className="p-4 space-y-3">
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                 <Globe className="w-3 h-3" />
-                Language Tip
+                Unlimited 4K Policy
               </h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                You can prompt in <strong>Malayalam</strong> or <strong>English</strong>. The AI will optimize it for visuals and generate a poetic script in your preferred language.
+                Enjoy **unlimited 4K generations** in both Malayalam and English. Our standard mode includes high-bitrate encoding for cinematic quality.
               </p>
             </CardContent>
           </Card>

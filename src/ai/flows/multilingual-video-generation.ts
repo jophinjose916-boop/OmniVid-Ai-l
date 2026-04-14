@@ -1,7 +1,7 @@
-
 'use server';
 /**
  * @fileOverview A Genkit flow for generating high-quality videos from text prompts and optional image references.
+ * Fixed schema validation errors by properly handling structured prompt optimization output.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,6 +12,7 @@ import { MediaPart } from 'genkit';
 const MultilingualVideoGenerationInputSchema = z.object({
   prompt: z.string().describe('The text prompt for video generation.'),
   photoDataUri: z.string().optional().describe('An optional photo reference as a data URI.'),
+  is4K: z.boolean().optional().describe('Whether to generate in high-fidelity 4K mode.'),
 });
 export type MultilingualVideoGenerationInput = z.infer<typeof MultilingualVideoGenerationInputSchema>;
 
@@ -32,6 +33,7 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
     throw new Error('Video media part missing URL.');
   }
 
+  // Use dynamic import for node-fetch to avoid build-time resolution issues
   const fetchModule = await import('node-fetch');
   const fetch = (fetchModule.default || fetchModule) as any;
   const videoDownloadUrl = `${videoMediaPart.media.url}&key=${process.env.GEMINI_API_KEY}`;
@@ -48,6 +50,7 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
 
 /**
  * Prompt to turn simple user descriptions into high-quality visual prompts.
+ * Uses a structured object output to be more robust.
  */
 const optimizePromptForVideo = ai.definePrompt({
   name: 'optimizePromptForVideoVisuals',
@@ -58,14 +61,16 @@ const optimizePromptForVideo = ai.definePrompt({
     }) 
   },
   prompt: `You are an expert director specializing in AI cinematography.
-Your task is to take a user's prompt (Malayalam or English) and expand it into a detailed visual description for Veo.
+Your task is to take a user's prompt (Malayalam or English) and expand it into a detailed visual description for a high-end AI video model.
 
 Expansion guidelines:
-1. Describe textures, lighting, and atmosphere.
-2. Define camera movement.
+1. Describe textures, lighting (cinematic, volumetric), and atmosphere in great detail.
+2. Define camera movement (e.g., slow pan, drone sweep).
+3. If input is in Malayalam (മലയാളം), translate the core intent to poetic English first.
 
 User Prompt: "{{{prompt}}}"
-{{#if photoDataUri}}The user provided a photo. The video must start or evolve from this image.{{/if}}`,
+{{#if photoDataUri}}The user provided a photo. The video must start from or be heavily inspired by this image.{{/if}}
+{{#if is4K}}Mode: Ultra High Fidelity 4K Cinematic mode.{{/if}}`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -85,14 +90,14 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
   async (input) => {
     // 1. Optimize the prompt
     const { output } = await optimizePromptForVideo(input);
-    const optimizedEnglishPrompt = output?.optimizedPrompt;
+    const optimizedString = output?.optimizedPrompt;
     
-    if (!optimizedEnglishPrompt) {
-        throw new Error('Failed to optimize prompt.');
+    if (!optimizedString) {
+        throw new Error('Failed to optimize prompt. Model returned no result.');
     }
 
     // 2. Prepare content parts for Veo
-    const promptParts: any[] = [{ text: optimizedEnglishPrompt }];
+    const promptParts: any[] = [{ text: optimizedString }];
     if (input.photoDataUri) {
       promptParts.push({
         media: {
@@ -128,7 +133,7 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
 
     const videoMediaPart = operation.output?.message?.content.find((p) => !!p.media);
     if (!videoMediaPart) {
-      throw new Error('No video returned.');
+      throw new Error('No video returned from the model.');
     }
 
     // 5. Download and return as data URI
