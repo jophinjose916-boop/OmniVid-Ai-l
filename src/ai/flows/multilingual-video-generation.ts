@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for generating high-quality videos from text prompts in multiple languages.
@@ -35,12 +36,9 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
     throw new Error('Video media part missing URL.');
   }
 
-  // The example for Veo download includes `&key=${process.env.GEMINI_API_KEY}`
-  // This implies the API key is needed to access the temporary video URL.
   const videoDownloadUrl = `${videoMediaPart.media.url}&key=${process.env.GEMINI_API_KEY}`;
   if (!process.env.GEMINI_API_KEY) {
       console.warn("GEMINI_API_KEY environment variable is not set. Video download might fail.");
-      // In a production environment, this should probably be an error or stricter check.
   }
 
   const response = await fetch(videoDownloadUrl);
@@ -49,11 +47,9 @@ async function fetchAndEncodeVideo(videoMediaPart: MediaPart): Promise<string> {
     throw new Error(`Failed to fetch video from URL: ${videoDownloadUrl}, status: ${response.status}`);
   }
 
-  // Read the entire stream into a buffer
   const chunks: Buffer[] = [];
-  // Type assertion for response.body to AsyncIterable<Buffer> is needed for `for await...of` to work correctly with node-fetch's Response.body
-  for await (const chunk of response.body as any as AsyncIterable<Buffer>) {
-    chunks.push(chunk);
+  for await (const chunk of response.body as any) {
+    chunks.push(chunk as Buffer);
   }
   const videoBuffer = Buffer.concat(chunks);
 
@@ -86,11 +82,9 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
 
     // Step 2: Generate video using Veo model
     let { operation } = await ai.generate({
-      model: googleAI.model('veo-3.0-generate-preview'), // Using Veo 3 for latest features
+      model: googleAI.model('veo-3.0-generate-preview'), 
       prompt: optimizedEnglishPrompt,
       config: {
-        // Veo 3 durationSeconds and aspectRatio are not configurable, defaulting to 8 seconds and 16:9.
-        // If allowing people, 'allow_all' is the only option for Veo 3: personGeneration: 'allow_all',
       },
     });
 
@@ -101,7 +95,6 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
     // Wait until the operation completes
     while (!operation.done) {
       operation = await ai.checkOperation(operation);
-      // Wait for 5 seconds before checking again, video generation can be slow.
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for generating multilingual AI voiceovers from text input.
@@ -9,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import wav from 'wav';
+import * as wav from 'wav';
 import { googleAI } from '@genkit-ai/google-genai';
 
 const MultilingualVoiceoverInputSchema = z.object({
