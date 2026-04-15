@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock, Fingerprint, Mail, UserCircle, Baby, User, UserPlus } from 'lucide-react';
+import { Sparkles, Wand2, Play, Download, Languages, Volume2, Loader2, Zap, ImagePlus, X, Mic2, Globe, ShieldCheck, Clock, Fingerprint, Mail, UserCircle, Baby, User, UserPlus, Users } from 'lucide-react';
 import { optimizePrompt } from '@/ai/flows/prompt-optimization';
 import { multilingualVideoGeneration } from '@/ai/flows/multilingual-video-generation';
 import { multilingualVoiceover } from '@/ai/flows/multilingual-voiceover';
@@ -26,13 +25,15 @@ export function VideoCreator() {
   const [scriptLanguage, setScriptLanguage] = useState<'malayalam' | 'english' | 'german'>('malayalam');
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [is4K, setIs4K] = useState(true);
+  const [isComboMode, setIsComboMode] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState(VOICES[0].id);
+  const [primaryVoice, setPrimaryVoice] = useState(VOICES[0].id);
+  const [secondaryVoice, setSecondaryVoice] = useState(VOICES[2].id);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isUserLoading } = useUser();
@@ -70,7 +71,12 @@ export function VideoCreator() {
         videoPrompt: userPrompt, 
         targetLanguage: scriptLanguage 
       });
-      setVoiceScript(scriptRes.script);
+      
+      const script = isComboMode 
+        ? `Speaker1: ${scriptRes.script} Speaker2: This visual journey is brought to you by OmniVid AI.`
+        : scriptRes.script;
+        
+      setVoiceScript(script);
       
       toast({ title: "Universal Logic Applied", description: "Prompt optimized for 30-min cinematic masterplan." });
     } catch (error) {
@@ -88,7 +94,12 @@ export function VideoCreator() {
     }
     setIsGeneratingVoice(true);
     try {
-      const result = await multilingualVoiceover({ text: voiceScript, voiceName: selectedVoice });
+      const result = await multilingualVoiceover({ 
+        text: voiceScript, 
+        voiceName: primaryVoice,
+        secondaryVoiceName: isComboMode ? secondaryVoice : undefined,
+        isMultiSpeaker: isComboMode
+      });
       setAudioUrl(result.audioDataUri);
       toast({ title: "Secure Audio Ready", description: "Biometric-ready voiceover synthesized." });
     } catch (error) {
@@ -275,9 +286,17 @@ export function VideoCreator() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-headline font-bold flex items-center gap-3">
                     <Volume2 className="w-6 h-6 text-primary" />
-                    Text-to-Audio
+                    AI Converter
                   </h3>
-                  <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1 border border-white/5">
+                  <div className="flex items-center gap-3 bg-card/50 px-3 py-1.5 rounded-2xl border border-white/5">
+                    <Switch id="combo-mode" checked={isComboMode} onCheckedChange={setIsComboMode} />
+                    <Label htmlFor="combo-mode" className="text-[10px] font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1">
+                      <Users className="w-3 h-3" /> Combo
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 bg-muted/50 rounded-full p-1 border border-white/5 w-fit">
                     <Button 
                       variant={scriptLanguage === 'malayalam' ? 'secondary' : 'ghost'} 
                       size="sm" 
@@ -302,31 +321,60 @@ export function VideoCreator() {
                     >
                       DE
                     </Button>
-                  </div>
                 </div>
                 
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">AI Persona Library</label>
-                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                    <SelectTrigger className="w-full bg-background/50 border-white/5 h-14 rounded-xl">
-                      <SelectValue placeholder="Select persona" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-white/10">
-                      {VOICES.map(voice => (
-                        <SelectItem key={voice.id} value={voice.id}>
-                          <div className="flex items-center gap-3 py-1">
-                            {voice.id === 'Deneb' ? <Baby className="w-4 h-4 opacity-50" /> : 
-                             voice.id === 'Algenib' || voice.id === 'Hadrit' ? <User className="w-4 h-4 opacity-50" /> : 
-                             <UserCircle className="w-4 h-4 opacity-50" />}
-                            <div className="flex flex-col text-left">
-                              <span className="font-bold text-sm">{voice.name}</span>
-                              <span className="text-[10px] opacity-60 uppercase tracking-tighter">{voice.description}</span>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                      {isComboMode ? 'Primary Persona (Speaker 1)' : 'AI Persona Library'}
+                    </label>
+                    <Select value={primaryVoice} onValueChange={setPrimaryVoice}>
+                      <SelectTrigger className="w-full bg-background/50 border-white/5 h-14 rounded-xl">
+                        <SelectValue placeholder="Select persona" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-white/10">
+                        {VOICES.map(voice => (
+                          <SelectItem key={voice.id} value={voice.id}>
+                            <div className="flex items-center gap-3 py-1">
+                              {voice.id === 'Deneb' ? <Baby className="w-4 h-4 opacity-50" /> : 
+                               voice.id === 'Algenib' || voice.id === 'Hadrit' ? <User className="w-4 h-4 opacity-50" /> : 
+                               <UserCircle className="w-4 h-4 opacity-50" />}
+                              <div className="flex flex-col text-left">
+                                <span className="font-bold text-sm">{voice.name}</span>
+                                <span className="text-[10px] opacity-60 uppercase tracking-tighter">{voice.description}</span>
+                              </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {isComboMode && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Secondary Persona (Speaker 2)</label>
+                      <Select value={secondaryVoice} onValueChange={setSecondaryVoice}>
+                        <SelectTrigger className="w-full bg-background/50 border-white/5 h-14 rounded-xl">
+                          <SelectValue placeholder="Select persona" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-white/10">
+                          {VOICES.map(voice => (
+                            <SelectItem key={voice.id} value={voice.id}>
+                              <div className="flex items-center gap-3 py-1">
+                                {voice.id === 'Deneb' ? <Baby className="w-4 h-4 opacity-50" /> : 
+                                 voice.id === 'Algenib' || voice.id === 'Hadrit' ? <User className="w-4 h-4 opacity-50" /> : 
+                                 <UserCircle className="w-4 h-4 opacity-50" />}
+                                <div className="flex flex-col text-left">
+                                  <span className="font-bold text-sm">{voice.name}</span>
+                                  <span className="text-[10px] opacity-60 uppercase tracking-tighter">{voice.description}</span>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -335,11 +383,14 @@ export function VideoCreator() {
                     {isGeneratingScript && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
                   </div>
                   <Textarea 
-                    placeholder="Type anything here to convert to audio..."
+                    placeholder={isComboMode ? 'Speaker1: Hello. Speaker2: Hi there!' : 'Type anything here to convert to audio...'}
                     className="bg-background/50 border-white/5 min-h-[120px] text-sm leading-relaxed rounded-xl"
                     value={voiceScript}
                     onChange={(e) => setVoiceScript(e.target.value)}
                   />
+                  {isComboMode && (
+                    <p className="text-[9px] text-muted-foreground italic">Tip: Use "Speaker1:" and "Speaker2:" tags for combo narration.</p>
+                  )}
                 </div>
 
                 <Button 
@@ -349,7 +400,7 @@ export function VideoCreator() {
                   disabled={isGeneratingVoice || !voiceScript}
                 >
                   {isGeneratingVoice ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic2 className="w-5 h-5" />}
-                  {isGeneratingVoice ? "Synthesizing..." : "Convert Text to Audio"}
+                  {isGeneratingVoice ? "Synthesizing..." : (isComboMode ? "Generate Combo Audio" : "Convert Text to Audio")}
                 </Button>
 
                 {audioUrl && (

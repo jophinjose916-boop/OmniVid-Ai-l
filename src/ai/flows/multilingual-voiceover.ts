@@ -1,8 +1,7 @@
-
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for generating multilingual AI voiceovers from text input.
- * Uses dynamic imports to resolve 'wav' module resolution issues in the Next.js build environment.
+ * Supports both single speaker and multi-speaker (Combo) scenarios.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,12 +9,10 @@ import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 const MultilingualVoiceoverInputSchema = z.object({
-  text: z.string().describe('The text to be converted into speech.'),
-  voiceName: z
-    .string()
-    .describe(
-      'The name of the prebuilt voice to use (e.g., Algenib, Achernar).'
-    ),
+  text: z.string().describe('The text to be converted into speech. For multi-speaker, use format "Speaker1: text... Speaker2: text..."'),
+  voiceName: z.string().describe('The name of the primary prebuilt voice to use.'),
+  secondaryVoiceName: z.string().optional().describe('The name of the secondary voice for combo mode.'),
+  isMultiSpeaker: z.boolean().optional().describe('Whether to use multi-speaker configuration.'),
 });
 export type MultilingualVoiceoverInput = z.infer<typeof MultilingualVoiceoverInputSchema>;
 
@@ -39,16 +36,40 @@ const multilingualVoiceoverFlow = ai.defineFlow(
     outputSchema: MultilingualVoiceoverOutputSchema,
   },
   async (input) => {
+    const config: any = {
+      responseModalities: ['AUDIO'],
+    };
+
+    if (input.isMultiSpeaker && input.secondaryVoiceName) {
+      config.speechConfig = {
+        multiSpeakerVoiceConfig: {
+          speakerVoiceConfigs: [
+            {
+              speaker: 'Speaker1',
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: input.voiceName },
+              },
+            },
+            {
+              speaker: 'Speaker2',
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: input.secondaryVoiceName },
+              },
+            },
+          ],
+        },
+      };
+    } else {
+      config.speechConfig = {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: input.voiceName },
+        },
+      };
+    }
+
     const { media } = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: input.voiceName },
-          },
-        },
-      },
+      config,
       prompt: input.text,
     });
 
@@ -78,7 +99,6 @@ async function toWav(
   rate = 24000,
   sampleWidth = 2
 ): Promise<string> {
-  // Dynamic import to handle CommonJS module in Next.js server environment correctly
   const wavModule = await import('wav');
   const wav = (wavModule.default || wavModule) as any;
   
