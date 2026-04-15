@@ -3,13 +3,16 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Video, Library, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck, Loader2 } from 'lucide-react';
+import { Video, Library, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck, Loader2, Key } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useUser, useAuth, useFirestore, initiateGoogleSignIn, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useAuth, useFirestore, initiateGoogleSignIn, initiateEmailSignIn, initiateEmailSignUp, setDocumentNonBlocking } from '@/firebase';
 import { useEffect, useState } from 'react';
 import { doc } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -18,14 +21,20 @@ export function Navbar() {
   const db = useFirestore();
   const appLogo = PlaceHolderImages.find(img => img.id === 'app-logo');
   const [isSigningIn, setIsSigningIn] = useState(false);
+  
+  // Email/Password state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Sync user profile to Firestore if signed in via Google
+  // Sync user profile to Firestore if signed in
   useEffect(() => {
     if (user && !user.isAnonymous && db) {
       const userRef = doc(db, 'users', user.uid);
       setDocumentNonBlocking(userRef, {
         id: user.uid,
-        googleId: user.providerData[0]?.uid || user.uid,
+        googleId: user.providerData[0]?.providerId === 'google.com' ? user.providerData[0]?.uid : null,
         email: user.email,
         lastLoginAt: new Date().toISOString(),
         createdAt: new Date().toISOString(), 
@@ -33,16 +42,29 @@ export function Navbar() {
     }
   }, [user, db]);
 
-  const handleSignIn = () => {
+  const handleGoogleSignIn = () => {
     if (!auth || isSigningIn) return;
     setIsSigningIn(true);
-    
-    // Trigger the non-blocking sign in
     initiateGoogleSignIn(auth);
-    
-    // We set a short timeout to reset the button state, 
-    // although the auth state change will naturally handle the transition.
     setTimeout(() => setIsSigningIn(false), 2500);
+  };
+
+  const handleEmailAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth || !email || !password || isSigningIn) return;
+    setIsSigningIn(true);
+    
+    if (isSignUp) {
+      initiateEmailSignUp(auth, email, password);
+    } else {
+      initiateEmailSignIn(auth, email, password);
+    }
+    
+    // Auth state listener in FirebaseProvider will handle the successful login
+    setTimeout(() => {
+      setIsSigningIn(false);
+      setIsDialogOpen(false);
+    }, 2000);
   };
 
   const navItems = [
@@ -110,15 +132,85 @@ export function Navbar() {
               </div>
             </div>
           ) : (
-            <Button 
-              variant="secondary" 
-              className="gap-3 font-black uppercase tracking-widest gradient-bg text-white border-none h-12 px-8 rounded-2xl shadow-2xl hover:scale-105 transition-all"
-              onClick={handleSignIn}
-              disabled={isSigningIn}
-            >
-              {isSigningIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
-              {isSigningIn ? "Connecting..." : "Log Gmail"}
-            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="secondary" 
+                  className="gap-3 font-black uppercase tracking-widest gradient-bg text-white border-none h-12 px-8 rounded-2xl shadow-2xl hover:scale-105 transition-all"
+                >
+                  <Mail className="w-5 h-5" />
+                  Log Gmail / Email
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[400px] bg-card border-white/10 rounded-3xl">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-headline font-bold text-center mb-6">Secure Session Access</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  <Button 
+                    className="w-full h-14 font-bold uppercase tracking-widest gap-3 rounded-2xl border-white/10 hover:bg-white/5 transition-all"
+                    variant="outline"
+                    onClick={handleGoogleSignIn}
+                    disabled={isSigningIn}
+                  >
+                    {isSigningIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5 text-primary" />}
+                    Log Gmail
+                  </Button>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-white/10" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground font-bold tracking-widest">Or secure email</span>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleEmailAuth} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-1">Email Address</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="name@example.com" 
+                        className="bg-background/50 border-white/10 h-12 rounded-xl focus:ring-primary"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-1">Password</Label>
+                      <Input 
+                        id="password" 
+                        type="password" 
+                        className="bg-background/50 border-white/10 h-12 rounded-xl focus:ring-primary"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-14 gradient-bg text-white font-bold uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] transition-all"
+                      disabled={isSigningIn}
+                    >
+                      {isSigningIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
+                      {isSignUp ? "Create Account" : "Secure Login"}
+                    </Button>
+                  </form>
+
+                  <div className="text-center">
+                    <button 
+                      className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
+                      onClick={() => setIsSignUp(!isSignUp)}
+                    >
+                      {isSignUp ? "Already have a session? Log in" : "New user? Create biometric account"}
+                    </button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>

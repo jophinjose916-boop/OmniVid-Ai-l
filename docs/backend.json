@@ -1,10 +1,11 @@
+
 {
   "entities": {
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user account within the OmniVid AI application, authenticated via Google.",
+      "description": "Represents a user account within the OmniVid AI application, authenticated via Google or Email.",
       "properties": {
         "id": {
           "type": "string",
@@ -12,7 +13,7 @@
         },
         "googleId": {
           "type": "string",
-          "description": "Unique identifier provided by Google OAuth."
+          "description": "Unique identifier provided by Google OAuth (if applicable)."
         },
         "email": {
           "type": "string",
@@ -101,7 +102,8 @@
   "auth": {
     "providers": [
       "google.com",
-      "anonymous"
+      "anonymous",
+      "password"
     ]
   },
   "firestore": {
