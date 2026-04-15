@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -144,8 +143,13 @@ export function VideoCreator() {
       }, { merge: true });
       
       toast({ title: "Masterpiece Ready!", description: "Your extended 4K cinematic render is complete." });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Generation Failed", description: "Check prompt or Gmail session and try again." });
+    } catch (error: any) {
+      console.error('Generation error details:', error);
+      toast({ 
+        variant: "destructive", 
+        title: "Generation Failed", 
+        description: error.message || "Check prompt or Gmail session and try again." 
+      });
     } finally {
       setIsGenerating(false);
     }

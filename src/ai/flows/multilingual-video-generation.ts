@@ -8,6 +8,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
+// Increase timeout for slow video generation
+export const maxDuration = 120;
+
 const MultilingualVideoGenerationInputSchema = z.object({
   prompt: z.string().describe('The text prompt in any language for video generation.'),
   photoDataUri: z.string().optional().describe('An optional photo reference as a data URI.'),
@@ -30,11 +33,14 @@ export type MultilingualVideoGenerationOutput = z.infer<typeof MultilingualVideo
 async function fetchAndEncodeVideo(videoMediaUrl: string): Promise<string> {
   const fetchModule = await import('node-fetch');
   const fetch = (fetchModule.default || fetchModule) as any;
-  const videoDownloadUrl = `${videoMediaUrl}&key=${process.env.GEMINI_API_KEY}`;
+  
+  // Try common API key environment variables
+  const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  const videoDownloadUrl = `${videoMediaUrl}&key=${apiKey}`;
   
   const response = await fetch(videoDownloadUrl);
   if (!response.ok) {
-    throw new Error(`Failed to fetch video: ${response.statusText}`);
+    throw new Error(`Failed to fetch video: ${response.status} ${response.statusText}`);
   }
 
   const buffer = await response.buffer();
@@ -56,9 +62,10 @@ const optimizePromptForVideo = ai.definePrompt({
 Take this user input (in any language) and convert it into a detailed visual masterplan for a high-end AI video model.
 
 Rules:
-1. Expand the prompt with textures, lighting, and camera movement.
-2. If the input is non-English, preserve the exact poetic sentiment.
-3. If an image is provided, ensure the prompt describes how the image evolves into motion.
+1. Expand the prompt with specific textures, cinematic lighting (e.g. volumetric, golden hour), and dynamic camera movement (e.g. slow zoom, drone sweep).
+2. If the input is non-English, preserve the exact poetic sentiment and translate accurately to English.
+3. Focus on high-fidelity visual elements suitable for a 4K render.
+4. If an image is provided, describe how the static image transitions into a fluid cinematic scene.
 
 User Prompt: "{{{prompt}}}"
 {{#if photoDataUri}}Context: This is an AI Photo Editing session. The image must come to life.{{/if}}
@@ -95,7 +102,13 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       prompt: promptParts,
       config: {
         durationSeconds: 8,
-        aspectRatio: '16:9'
+        aspectRatio: '16:9',
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+        ]
       }
     });
 
@@ -103,9 +116,18 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       throw new Error('Video generation failed to start.');
     }
 
-    while (!operation.done) {
+    // Poll for completion
+    let attempts = 0;
+    const maxAttempts = 24; // 24 * 5s = 120s
+    while (!operation.done && attempts < maxAttempts) {
       operation = await ai.checkOperation(operation);
+      if (operation.done) break;
       await new Promise((resolve) => setTimeout(resolve, 5000));
+      attempts++;
+    }
+
+    if (!operation.done) {
+      throw new Error('Video generation timed out.');
     }
 
     if (operation.error) {
