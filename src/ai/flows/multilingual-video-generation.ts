@@ -8,9 +8,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
-// Increase timeout for slow video generation
-export const maxDuration = 120;
-
 const MultilingualVideoGenerationInputSchema = z.object({
   prompt: z.string().describe('The text prompt in any language for video generation.'),
   photoDataUri: z.string().optional().describe('An optional photo reference as a data URI.'),
@@ -34,7 +31,6 @@ async function fetchAndEncodeVideo(videoMediaUrl: string): Promise<string> {
   const fetchModule = await import('node-fetch');
   const fetch = (fetchModule.default || fetchModule) as any;
   
-  // Try common API key environment variables
   const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
   const videoDownloadUrl = `${videoMediaUrl}&key=${apiKey}`;
   
@@ -116,9 +112,8 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       throw new Error('Video generation failed to start.');
     }
 
-    // Poll for completion
     let attempts = 0;
-    const maxAttempts = 24; // 24 * 5s = 120s
+    const maxAttempts = 24; 
     while (!operation.done && attempts < maxAttempts) {
       operation = await ai.checkOperation(operation);
       if (operation.done) break;

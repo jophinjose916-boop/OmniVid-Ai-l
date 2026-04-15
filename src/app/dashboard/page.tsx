@@ -1,6 +1,7 @@
-
 import { Navbar } from '@/components/layout/Navbar';
 import { VideoCreator } from '@/components/video/VideoCreator';
+
+export const maxDuration = 120;
 
 export default function DashboardPage() {
   return (
