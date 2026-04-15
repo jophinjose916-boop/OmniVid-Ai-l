@@ -13,12 +13,14 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 export function Navbar() {
   const pathname = usePathname();
   const { user } = useUser();
   const auth = useAuth();
   const db = useFirestore();
+  const { toast } = useToast();
   const appLogo = PlaceHolderImages.find(img => img.id === 'app-logo');
   const [isSigningIn, setIsSigningIn] = useState(false);
   
@@ -45,8 +47,23 @@ export function Navbar() {
   const handleGoogleSignIn = () => {
     if (!auth || isSigningIn) return;
     setIsSigningIn(true);
-    initiateGoogleSignIn(auth);
-    setTimeout(() => setIsSigningIn(false), 2500);
+    initiateGoogleSignIn(auth)
+      .then(() => {
+        setIsSigningIn(false);
+        setIsDialogOpen(false);
+        toast({ title: "Welcome back!", description: "Successfully signed in with Google." });
+      })
+      .catch((error) => {
+        setIsSigningIn(false);
+        const ignoredErrors = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
+        if (!ignoredErrors.includes(error.code)) {
+          toast({
+            variant: "destructive",
+            title: "Sign-in Failed",
+            description: error.message || "Could not complete Google authentication."
+          });
+        }
+      });
   };
 
   const handleEmailAuth = (e: React.FormEvent) => {
@@ -54,17 +71,35 @@ export function Navbar() {
     if (!auth || !email || !password || isSigningIn) return;
     setIsSigningIn(true);
     
-    if (isSignUp) {
-      initiateEmailSignUp(auth, email, password);
-    } else {
-      initiateEmailSignIn(auth, email, password);
-    }
+    const authPromise = isSignUp 
+      ? initiateEmailSignUp(auth, email, password)
+      : initiateEmailSignIn(auth, email, password);
     
-    // Auth state listener in FirebaseProvider will handle the successful login
-    setTimeout(() => {
-      setIsSigningIn(false);
-      setIsDialogOpen(false);
-    }, 2000);
+    authPromise
+      .then(() => {
+        setIsSigningIn(false);
+        setIsDialogOpen(false);
+        toast({ 
+          title: isSignUp ? "Account Created" : "Welcome back", 
+          description: isSignUp ? "Your secure session is now active." : "Successfully logged in." 
+        });
+      })
+      .catch((error) => {
+        setIsSigningIn(false);
+        let errorMessage = "Invalid credentials. Please check your email and password.";
+        
+        if (error.code === 'auth/email-already-in-use') errorMessage = "This email is already registered.";
+        if (error.code === 'auth/weak-password') errorMessage = "Password should be at least 6 characters.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          errorMessage = "Incorrect email or password.";
+        }
+
+        toast({
+          variant: "destructive",
+          title: "Authentication Failed",
+          description: errorMessage
+        });
+      });
   };
 
   const navItems = [
