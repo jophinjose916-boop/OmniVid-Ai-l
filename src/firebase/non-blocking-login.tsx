@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -17,7 +18,7 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
 /** Initiate Google sign-in (non-blocking). */
 export function initiateGoogleSignIn(authInstance: Auth): void {
   const provider = new GoogleAuthProvider();
-  // CRITICAL: Call signInWithPopup directly. Do NOT use 'await signInWithPopup(...)'.
+  // Using signInWithPopup for a better experience with Google Authentication
   signInWithPopup(authInstance, provider).catch((error) => {
     // Silently handle common errors like popup closed by user
     if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
