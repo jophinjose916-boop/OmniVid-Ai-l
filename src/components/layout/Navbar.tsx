@@ -3,10 +3,10 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Video, Library, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck, Loader2, Key } from 'lucide-react';
+import { Video, Library, User, Zap, LogIn, Fingerprint, Mail, ShieldCheck, Loader2, Key, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useUser, useAuth, useFirestore, initiateGoogleSignIn, initiateEmailSignIn, initiateEmailSignUp, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useAuth, useFirestore, initiateGoogleSignIn, initiateEmailSignIn, initiateEmailSignUp, initiateSignOut, setDocumentNonBlocking } from '@/firebase';
 import { useEffect, useState } from 'react';
 import { doc } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -24,13 +25,11 @@ export function Navbar() {
   const appLogo = PlaceHolderImages.find(img => img.id === 'app-logo');
   const [isSigningIn, setIsSigningIn] = useState(false);
   
-  // Email/Password state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Sync user profile to Firestore if signed in
   useEffect(() => {
     if (user && !user.isAnonymous && db) {
       const userRef = doc(db, 'users', user.uid);
@@ -54,20 +53,13 @@ export function Navbar() {
       toast({ title: "Welcome back!", description: "Successfully signed in with Google." });
     } catch (error: any) {
       setIsSigningIn(false);
-      
       let errorMessage = error.message || "Could not complete Google authentication.";
-      
       if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = "Google Sign-in is not enabled in your Firebase Console. Please go to Authentication > Sign-in method and enable Google.";
+        errorMessage = "Google Sign-in is not enabled. Please enable it in Authentication > Sign-in method in your Firebase Console.";
       }
-
       const ignoredErrors = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
       if (!ignoredErrors.includes(error.code)) {
-        toast({
-          variant: "destructive",
-          title: "Sign-in Failed",
-          description: errorMessage
-        });
+        toast({ variant: "destructive", title: "Sign-in Failed", description: errorMessage });
       }
     }
   };
@@ -76,7 +68,6 @@ export function Navbar() {
     e.preventDefault();
     if (!auth || !email || !password || isSigningIn) return;
     setIsSigningIn(true);
-    
     try {
       if (isSignUp) {
         await initiateEmailSignUp(auth, email, password);
@@ -91,22 +82,23 @@ export function Navbar() {
       });
     } catch (error: any) {
       setIsSigningIn(false);
-      let errorMessage = "Invalid credentials. Please check your email and password.";
-      
-      if (error.code === 'auth/email-already-in-use') errorMessage = "This email is already registered.";
-      if (error.code === 'auth/weak-password') errorMessage = "Password should be at least 6 characters.";
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = "Incorrect email or password.";
-      }
+      let errorMessage = "Authentication failed.";
       if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = "Email/Password sign-in is not enabled in your Firebase Console. Please enable it in Authentication > Sign-in method.";
+        errorMessage = "Email/Password sign-in is not enabled. Please enable it in your Firebase Console.";
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password.";
       }
+      toast({ variant: "destructive", title: "Auth Failed", description: errorMessage });
+    }
+  };
 
-      toast({
-        variant: "destructive",
-        title: "Authentication Failed",
-        description: errorMessage
-      });
+  const handleSignOut = async () => {
+    if (!auth) return;
+    try {
+      await initiateSignOut(auth);
+      toast({ title: "Signed Out", description: "You have been successfully logged out." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to sign out." });
     }
   };
 
@@ -125,7 +117,6 @@ export function Navbar() {
                 src={appLogo?.imageUrl} 
                 alt="OmniVid AI Logo" 
                 className="w-full h-full object-cover"
-                data-ai-hint={appLogo?.imageHint}
               />
             </div>
             <span className="font-headline font-bold text-2xl tracking-tighter hidden sm:inline-block">
@@ -154,26 +145,45 @@ export function Navbar() {
         <div className="flex items-center gap-5">
           <div className="hidden sm:flex items-center gap-2 bg-secondary/10 px-4 py-2 rounded-xl border border-secondary/20">
             <Fingerprint className="w-4 h-4 text-secondary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Biometric Tech Active</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Biometric Active</span>
           </div>
 
           {user && !user.isAnonymous ? (
-            <div className="flex items-center gap-4">
-              <div className="hidden lg:flex flex-col items-end">
-                <span className="text-[10px] font-black uppercase tracking-widest text-green-500 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" />
-                  Secure Session
-                </span>
-                <span className="text-[11px] font-bold text-muted-foreground">{user.email}</span>
-              </div>
-              <div className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-primary/30 ring-4 ring-primary/10 shadow-xl">
-                <img 
-                  src={user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} 
-                  alt={user.displayName || "User"} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-4 cursor-pointer">
+                  <div className="hidden lg:flex flex-col items-end">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-green-500 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" />
+                      Secure
+                    </span>
+                    <span className="text-[11px] font-bold text-muted-foreground truncate max-w-[120px]">{user.email}</span>
+                  </div>
+                  <div className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-primary/30 ring-4 ring-primary/10 shadow-xl">
+                    <img 
+                      src={user.photoURL || `https://picsum.photos/seed/${user.uid}/100/100`} 
+                      alt={user.displayName || "User"} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-card border-white/10 rounded-2xl p-2" align="end">
+                <DropdownMenuLabel className="font-headline font-bold">My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem className="rounded-xl gap-3 cursor-pointer" asChild>
+                  <Link href="/dashboard/library">
+                    <Library className="w-4 h-4" />
+                    My Videos
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem className="rounded-xl gap-3 text-destructive focus:text-destructive cursor-pointer" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -181,13 +191,13 @@ export function Navbar() {
                   variant="secondary" 
                   className="gap-3 font-black uppercase tracking-widest gradient-bg text-white border-none h-12 px-8 rounded-2xl shadow-2xl hover:scale-105 transition-all"
                 >
-                  <Mail className="w-5 h-5" />
-                  Log Gmail / Email
+                  <LogIn className="w-5 h-5" />
+                  Log In
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[400px] bg-card border-white/10 rounded-3xl">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-headline font-bold text-center mb-6">Secure Session Access</DialogTitle>
+                  <DialogTitle className="text-2xl font-headline font-bold text-center mb-6">Secure Access</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6">
                   <Button 
@@ -199,56 +209,27 @@ export function Navbar() {
                     {isSigningIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5 text-primary" />}
                     Log Gmail
                   </Button>
-
                   <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-white/10" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground font-bold tracking-widest">Or secure email</span>
-                    </div>
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground font-bold tracking-widest">Or Secure Email</span></div>
                   </div>
-
                   <form onSubmit={handleEmailAuth} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-1">Email Address</Label>
-                      <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="name@example.com" 
-                        className="bg-background/50 border-white/10 h-12 rounded-xl focus:ring-primary"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
+                      <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-1">Email</Label>
+                      <Input id="email" type="email" placeholder="name@example.com" className="bg-background/50 border-white/10 h-12 rounded-xl" value={email} onChange={(e) => setEmail(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest opacity-60 ml-1">Password</Label>
-                      <Input 
-                        id="password" 
-                        type="password" 
-                        className="bg-background/50 border-white/10 h-12 rounded-xl focus:ring-primary"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
+                      <Input id="password" type="password" className="bg-background/50 border-white/10 h-12 rounded-xl" value={password} onChange={(e) => setPassword(e.target.value)} required />
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full h-14 gradient-bg text-white font-bold uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] transition-all"
-                      disabled={isSigningIn}
-                    >
+                    <Button type="submit" className="w-full h-14 gradient-bg text-white font-bold uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02]" disabled={isSigningIn}>
                       {isSigningIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
                       {isSignUp ? "Create Account" : "Secure Login"}
                     </Button>
                   </form>
-
                   <div className="text-center">
-                    <button 
-                      className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
-                      onClick={() => setIsSignUp(!isSignUp)}
-                    >
-                      {isSignUp ? "Already have a session? Log in" : "New user? Create biometric account"}
+                    <button className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline" onClick={() => setIsSignUp(!isSignUp)}>
+                      {isSignUp ? "Already have a session? Log in" : "New user? Create account"}
                     </button>
                   </div>
                 </div>
