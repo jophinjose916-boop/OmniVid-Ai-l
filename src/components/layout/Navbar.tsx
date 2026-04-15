@@ -53,13 +53,17 @@ export function Navbar() {
       toast({ title: "Welcome back!", description: "Successfully signed in with Google." });
     } catch (error: any) {
       setIsSigningIn(false);
+      let title = "Sign-in Failed";
       let errorMessage = error.message || "Could not complete Google authentication.";
+      
       if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = "Google Sign-in is not enabled. Please enable it in Authentication > Sign-in method in your Firebase Console.";
+        title = "Setup Required";
+        errorMessage = "Google Sign-in is not enabled. Please go to your Firebase Console > Authentication > Sign-in method and enable 'Google'.";
       }
+      
       const ignoredErrors = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
       if (!ignoredErrors.includes(error.code)) {
-        toast({ variant: "destructive", title: "Sign-in Failed", description: errorMessage });
+        toast({ variant: "destructive", title, description: errorMessage });
       }
     }
   };
@@ -82,13 +86,17 @@ export function Navbar() {
       });
     } catch (error: any) {
       setIsSigningIn(false);
+      let title = "Auth Failed";
       let errorMessage = "Authentication failed.";
+      
       if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = "Email/Password sign-in is not enabled. Please enable it in your Firebase Console.";
+        title = "Setup Required";
+        errorMessage = "Email/Password sign-in is not enabled. Please enable 'Email/Password' in your Firebase Console.";
       } else if (error.code === 'auth/invalid-credential') {
         errorMessage = "Invalid email or password.";
       }
-      toast({ variant: "destructive", title: "Auth Failed", description: errorMessage });
+      
+      toast({ variant: "destructive", title, description: errorMessage });
     }
   };
 

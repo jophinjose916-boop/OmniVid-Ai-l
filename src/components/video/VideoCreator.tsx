@@ -47,8 +47,8 @@ export function VideoCreator() {
         if (error.code === 'auth/operation-not-allowed') {
           toast({ 
             variant: "destructive", 
-            title: "Anonymous Auth Disabled", 
-            description: "Please enable Anonymous authentication in your Firebase Console." 
+            title: "Setup Required", 
+            description: "Anonymous authentication is not enabled. Please enable it in your Firebase Console > Authentication > Sign-in method." 
           });
         }
       });
