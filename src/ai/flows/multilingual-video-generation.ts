@@ -93,49 +93,56 @@ const multilingualVideoGenerationFlow = ai.defineFlow(
       });
     }
 
-    let { operation } = await ai.generate({
-      model: googleAI.model('veo-2.0-generate-001'), 
-      prompt: promptParts,
-      config: {
-        durationSeconds: 8,
-        aspectRatio: '16:9',
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-        ]
+    try {
+      let { operation } = await ai.generate({
+        model: googleAI.model('veo-3.0-generate-preview'), 
+        prompt: promptParts,
+        config: {
+          aspectRatio: '16:9',
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+          ]
+        }
+      });
+
+      if (!operation) {
+        throw new Error('Video generation failed to start.');
       }
-    });
 
-    if (!operation) {
-      throw new Error('Video generation failed to start.');
+      let attempts = 0;
+      const maxAttempts = 24; 
+      while (!operation.done && attempts < maxAttempts) {
+        operation = await ai.checkOperation(operation);
+        if (operation.done) break;
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        attempts++;
+      }
+
+      if (!operation.done) {
+        throw new Error('Video generation timed out.');
+      }
+
+      if (operation.error) {
+        throw new Error(`Generation error: ${operation.error.message}`);
+      }
+
+      const videoMediaPart = operation.output?.message?.content.find((p) => !!p.media);
+      if (!videoMediaPart || !videoMediaPart.media?.url) {
+        throw new Error('No video returned from the model.');
+      }
+
+      const videoDataUri = await fetchAndEncodeVideo(videoMediaPart.media.url);
+      return { videoDataUri };
+    } catch (error: any) {
+      // Specialized error handling for billing issues
+      if (error.message?.includes('billing enabled') || error.message?.includes('GCP billing')) {
+        throw new Error('Billing Required: The 4K Video engine requires a Google Cloud billing account. Please enable billing in your Google Cloud Console to start your 30-min cinematic rendering session.');
+      }
+      throw error;
     }
-
-    let attempts = 0;
-    const maxAttempts = 24; 
-    while (!operation.done && attempts < maxAttempts) {
-      operation = await ai.checkOperation(operation);
-      if (operation.done) break;
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      attempts++;
-    }
-
-    if (!operation.done) {
-      throw new Error('Video generation timed out.');
-    }
-
-    if (operation.error) {
-      throw new Error(`Generation error: ${operation.error.message}`);
-    }
-
-    const videoMediaPart = operation.output?.message?.content.find((p) => !!p.media);
-    if (!videoMediaPart || !videoMediaPart.media?.url) {
-      throw new Error('No video returned from the model.');
-    }
-
-    const videoDataUri = await fetchAndEncodeVideo(videoMediaPart.media.url);
-    return { videoDataUri };
   }
 );
 
