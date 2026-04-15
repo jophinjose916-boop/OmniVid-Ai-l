@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -18,10 +17,15 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
 /** Initiate Google sign-in (non-blocking). */
 export function initiateGoogleSignIn(authInstance: Auth): void {
   const provider = new GoogleAuthProvider();
-  // Using signInWithPopup for a better experience with Google Authentication
+  // Using signInWithPopup for a high-security session management experience.
   signInWithPopup(authInstance, provider).catch((error) => {
-    // Silently handle common errors like popup closed by user
-    if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+    // Handle common errors like popup closed by user or cancelled request gracefully.
+    const ignoredErrors = [
+      'auth/popup-closed-by-user',
+      'auth/cancelled-popup-request',
+      'auth/popup-blocked'
+    ];
+    if (!ignoredErrors.includes(error.code)) {
       console.error("Authentication error:", error);
     }
   });
